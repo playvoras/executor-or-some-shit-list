@@ -5973,10 +5973,6 @@ function sandbox:initialize()
 		return environment.roblox
 	end
 
-	environment.global.printidentity = function()
-		print("Current identity is 7")
-	end
-
 	environment.global.crypt.base64encode = function(data)
 		assert(data, "Missing #1 argument")
 		assert(typeof(data) == "string", "Expected #1 argument to be string, got "..typeof(data).. " instead")
