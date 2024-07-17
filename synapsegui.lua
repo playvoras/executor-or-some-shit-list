@@ -6079,7 +6079,7 @@ function sandbox:initialize()
 	local fake_identity = 3;
 
 	environment.global.identifyexecutor = function()
-		return "Glix", "1.0"
+		return "PolicyService", "1.0"
 	end
 
 	environment.global.getexecutorname = environment.global.identifyexecutor
