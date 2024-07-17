@@ -10376,19 +10376,17 @@ local function initialize_scripts_handler()
 end
 
 
+-- Define the function to initialize the environment
 local function initialize_environment()
-	task.wait(4)
-
-	sandbox:initialize()
-
-	gui:Create()
-
-	task.spawn(initialize_scripts_handler)
-
-	--val_the_sigma("print'hi'")()
+    sandbox:initialize()
+    gui:Create()
+    task.spawn(initialize_scripts_handler)
 end
 
-task.spawn(initialize_environment) -- loads main init script
+-- Connect the function to the game's Loaded event
+game.Loaded:Connect(function()
+    initialize_environment()
+end)
 
 -- loads miscellanous shenanigans based on the hooked script name
 if script.Name == "PolicyService" then
