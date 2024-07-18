@@ -558,8 +558,8 @@ TEMPORARY REMOVED UNTIL WE FIND A FIX
 
 -- Thanks to xAPI for the following:
 
-local Sandbox = loadstring(game:HttpGet("https://pastebin.com/raw/a0cuADU4"))()
-funcs.string.dump = loadstring(game:HttpGet("https://rawscripts.net/raw/Universal-Script-Function-Dumper-14820"))()
+local Sandbox = loadstring(HttpGet("https://pastebin.com/raw/a0cuADU4"))()
+funcs.string.dump = loadstring(HttpGet("https://rawscripts.net/raw/Universal-Script-Function-Dumper-14820"))()
 funcs.dumpstring = funcs.string.dump
 
 -- // The rest is made by me.
