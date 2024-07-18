@@ -63,7 +63,7 @@ local Log = game:GetService('LogService');
 
 -- Load proprerties (CREDITS TO DEUCES ON DISCORD)
 local API_Dump_Url = "https://raw.githubusercontent.com/MaximumADHD/Roblox-Client-Tracker/roblox/Mini-API-Dump.json"
-local API_Dump = game:HttpGet(API_Dump_Url)
+local API_Dump = HttpGet(API_Dump_Url)
 local Hidden = {}
 
 for _, API_Class in pairs(HttpService:JSONDecode(API_Dump).Classes) do
@@ -1715,7 +1715,7 @@ for _, i in pairs(funcs2) do
  local v = funcs[i]
  local Result = SafeOverride(i, v)
  if Result == 2 then Count = Count + 1 end
- local str = Result == 1 and ('[⛔] %s already exists.'):format(i) or Result == 2 and ("[✅] Added %s%s to the global environment. (%d/%d)"):format(i, type(v)=='function' and '()' or '', Count, Total) or Result ~= 1 and Result ~= 2 and ("[⛔] Unknown result for %s."):format(i)
+ local str = Result == 1 and ('[â›”] %s already exists.'):format(i) or Result == 2 and ("[âœ…] Added %s%s to the global environment. (%d/%d)"):format(i, type(v)=='function' and '()' or '', Count, Total) or Result ~= 1 and Result ~= 2 and ("[â›”] Unknown result for %s."):format(i)
  print(str)
 end
 
