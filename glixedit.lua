@@ -6946,7 +6946,7 @@ function gui:Create()
 	TextLabel.Position = UDim2.new(0.0240000002, 0, 0.0359999985, 0)
 	TextLabel.Size = UDim2.new(0, 93, 0, 10)
 	TextLabel.Font = Enum.Font.Roboto
-	TextLabel.Text = "Compiled Works"
+	TextLabel.Text = "Playvora"
 	TextLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
 	TextLabel.TextSize = 14.000
 	e.Activated:Connect(function()
