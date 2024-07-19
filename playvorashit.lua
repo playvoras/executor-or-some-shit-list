@@ -36,8 +36,8 @@ local load = coroutine.wrap(function()
 			local pos = 1
 
 			return function() -- chunk reader anonymous function here
-				local buff = source:sub(pos, pos  LUAL_BUFFERSIZE - 1)
-				pos = math.min(#source  1, pos  LUAL_BUFFERSIZE)
+				local buff = source:sub(pos, pos + LUAL_BUFFERSIZE - 1)
+				pos = math.min(#source + 1, pos + LUAL_BUFFERSIZE)
 				return buff
 			end
 		end
@@ -62,7 +62,7 @@ local load = coroutine.wrap(function()
 		end
 
 		function luaZ:zgetc(z)
-			local n, p = z.n, z.p  1
+			local n, p = z.n, z.p + 1
 			if n > 0 then
 				z.n, z.p = n - 1, p
 				return string.sub(z.data, p, p)
@@ -111,8 +111,8 @@ TK_EOS <eof>]]
 
 		function luaX:init()
 			local tokens, enums = {}, {}
-			for v in string.gmatch(self.RESERVED, "[^\n]") do
-				local _, _, tok, str = string.find(v, "(%S)%s(%S)")
+			for v in string.gmatch(self.RESERVED, "[^\n]+") do
+				local _, _, tok, str = string.find(v, "(%S+)%s+(%S+)")
 				tokens[tok] = str
 				enums[str] = tok
 			end
@@ -132,7 +132,7 @@ TK_EOS <eof>]]
 					local l = #source
 					out = ""
 					if l > bufflen then
-						source = string.sub(source, 1  l - bufflen) 
+						source = string.sub(source, 1 + l - bufflen) 
 						out = out.."..."
 					end
 					out = out..source
@@ -196,7 +196,7 @@ TK_EOS <eof>]]
 			if self:currIsNewline(ls) and ls.current ~= old then
 				self:nextc(ls)
 			end
-			ls.linenumber = ls.linenumber  1
+			ls.linenumber = ls.linenumber + 1
 			if ls.linenumber >= self.MAX_INT then
 				self:syntaxerror(ls, "chunk has too many lines")
 			end
@@ -294,7 +294,7 @@ TK_EOS <eof>]]
 				self:save_and_next(ls)
 			until string.find(ls.current, "%D") and ls.current ~= "."
 			if self:check_next(ls, "Ee") then
-				self:check_next(ls, "+")
+				self:check_next(ls, "+-")
 			end
 			while string.find(ls.current, "^%w$") or ls.current == "_" do
 				self:save_and_next(ls)
@@ -313,7 +313,7 @@ TK_EOS <eof>]]
 			self:save_and_next(ls)
 			while ls.current == "=" do
 				self:save_and_next(ls)
-				count = count  1
+				count = count + 1
 			end
 			return (ls.current == s) and count or (-count) - 1
 		end
@@ -333,7 +333,7 @@ TK_EOS <eof>]]
 					if self.LUA_COMPAT_LSTR then
 						if self:skip_sep(ls) == sep then
 							self:save_and_next(ls)
-							cont = cont  1
+							cont = cont + 1
 							if self.LUA_COMPAT_LSTR == 1 then
 								if sep == 0 then
 									self:lexerror(ls, "nesting of [[...]] is deprecated", "[")
@@ -363,7 +363,7 @@ TK_EOS <eof>]]
 				end
 			end
 			if Token then
-				local p = 3  sep
+				local p = 3 + sep
 				Token.seminfo = string.sub(ls.buff, p, -p)
 			end
 		end
@@ -391,9 +391,9 @@ TK_EOS <eof>]]
 						else
 							c, i = 0, 0
 							repeat
-								c = 10 * c  ls.current
+								c = 10 * c + ls.current
 								self:nextc(ls)
-								i = i  1
+								i = i + 1
 							until i >= 3 or not string.find(ls.current, "%d")
 							if c > 255 then
 								self:lexerror(ls, "escape sequence too large", "TK_STRING")
@@ -502,15 +502,15 @@ TK_EOS <eof>]]
 
 		luaP.SIZE_C  = 9
 		luaP.SIZE_B  = 9
-		luaP.SIZE_Bx = luaP.SIZE_C  luaP.SIZE_B
+		luaP.SIZE_Bx = luaP.SIZE_C + luaP.SIZE_B
 		luaP.SIZE_A  = 8
 
 		luaP.SIZE_OP = 6
 
 		luaP.POS_OP = 0
-		luaP.POS_A  = luaP.POS_OP  luaP.SIZE_OP
-		luaP.POS_C  = luaP.POS_A  luaP.SIZE_A
-		luaP.POS_B  = luaP.POS_C  luaP.SIZE_C
+		luaP.POS_A  = luaP.POS_OP + luaP.SIZE_OP
+		luaP.POS_C  = luaP.POS_A + luaP.SIZE_A
+		luaP.POS_B  = luaP.POS_C + luaP.SIZE_C
 		luaP.POS_Bx = luaP.POS_C
 
 		luaP.MAXARG_Bx  = math.ldexp(1, luaP.SIZE_Bx) - 1
@@ -536,7 +536,7 @@ TK_EOS <eof>]]
 		function luaP:SETARG_Bx(i, b) i.Bx = b end
 
 		function luaP:GETARG_sBx(i) return i.Bx - self.MAXARG_sBx end
-		function luaP:SETARG_sBx(i, b) i.Bx = b  self.MAXARG_sBx end
+		function luaP:SETARG_sBx(i, b) i.Bx = b + self.MAXARG_sBx end
 
 		function luaP:CREATE_ABC(o,a,b,c)
 			return {OP = self.OpCode[o], A = a, B = b, C = c}
@@ -559,11 +559,11 @@ TK_EOS <eof>]]
 				i.C = i.Bx % 512
 				i.B = (i.Bx - i.C) / 512
 			end
-			local I = i.A * 64  i.OP
+			local I = i.A * 64 + i.OP
 			local c0 = I % 256
-			I = i.C * 64  (I - c0) / 256
+			I = i.C * 64 + (I - c0) / 256
 			local c1 = I % 256
-			I = i.B * 128  (I - c1) / 256
+			I = i.B * 128 + (I - c1) / 256
 			local c2 = I % 256
 			local c3 = (I - c2) / 256
 			return string.char(c0, c1, c2, c3)
@@ -575,16 +575,16 @@ TK_EOS <eof>]]
 			local I = byte(x, 1)
 			local op = I % 64
 			i.OP = op
-			I = byte(x, 2) * 4  (I - op) / 64
+			I = byte(x, 2) * 4 + (I - op) / 64
 			local a = I % 256
 			i.A = a
-			I = byte(x, 3) * 4  (I - a) / 256
+			I = byte(x, 3) * 4 + (I - a) / 256
 			local c = I % 512
 			i.C = c
-			i.B = byte(x, 4) * 2  (I - c) / 512
-			local opmode = self.OpMode[tonumber(string.sub(self.opmodes[op  1], 7, 7))]
+			i.B = byte(x, 4) * 2 + (I - c) / 512
+			local opmode = self.OpMode[tonumber(string.sub(self.opmodes[op + 1], 7, 7))]
 			if opmode ~= "iABC" then
-				i.Bx = i.B * 512  i.C
+				i.Bx = i.B * 512 + i.C
 			end
 			return i
 		end
@@ -597,7 +597,7 @@ TK_EOS <eof>]]
 
 		luaP.MAXINDEXRK = luaP.BITRK - 1
 
-		function luaP:RKASK(x) return x  self.BITRK end
+		function luaP:RKASK(x) return x + self.BITRK end
 
 		luaP.NO_REG = luaP.MAXARG_A
 
@@ -615,12 +615,12 @@ LEN CONCAT JMP EQ LT
 LE TEST TESTSET CALL TAILCALL
 RETURN FORLOOP FORPREP TFORLOOP SETLIST
 CLOSE CLOSURE VARARG
-]], "%S") do
+]], "%S+") do
 			local n = "OP_"..v
 			luaP.opnames[i] = v
 			luaP.OpCode[n] = i
 			luaP.ROpCode[i] = n
-			i = i  1
+			i = i + 1
 		end
 		luaP.NUM_OPCODES = i
 		luaP.OpArgMask = { OpArgN = 0, OpArgU = 1, OpArgR = 2, OpArgK = 3 }
@@ -649,8 +649,8 @@ CLOSE CLOSURE VARARG
 
 		local function opmode(t, a, b, c, m)
 			local luaP = luaP
-			return t * 128  a * 64 
-				luaP.OpArgMask[b] * 16  luaP.OpArgMask[c] * 4  luaP.OpMode[m]
+			return t * 128 + a * 64 +
+				luaP.OpArgMask[b] * 16 + luaP.OpArgMask[c] * 4 + luaP.OpMode[m]
 		end
 
 
@@ -763,22 +763,22 @@ CLOSE CLOSURE VARARG
 				mantissa, exponent = 0, 2047
 			else
 				mantissa = (mantissa * 2 - 1) * math.ldexp(0.5, 53)
-				exponent = exponent  1022
+				exponent = exponent + 1022
 			end
 			local v, byte = ""
 			x = math.floor(mantissa)
 			for i = 1,6 do
 				x, byte = grab_byte(x); v = v..byte 
 			end
-			x, byte = grab_byte(exponent * 16  x); v = v..byte
-			x, byte = grab_byte(sign * 128  x); v = v..byte 
+			x, byte = grab_byte(exponent * 16 + x); v = v..byte
+			x, byte = grab_byte(sign * 128 + x); v = v..byte 
 			return v
 		end
 
 		function luaU:from_int(x)
 			local v = ""
 			x = math.floor(x)
-			if x < 0 then x = 4294967296  x end  
+			if x < 0 then x = 4294967296 + x end  
 			for i = 1, 4 do
 				local c = x % 256
 				v = v..string.char(c); x = math.floor(x / 256)
@@ -935,7 +935,7 @@ CLOSE CLOSURE VARARG
 		luaK.sethvalue = luaK.setsvalue
 		luaK.setbvalue = luaK.setsvalue
 
-		function luaK:numadd(a, b) return a  b end
+		function luaK:numadd(a, b) return a + b end
 		function luaK:numsub(a, b) return a - b end
 		function luaK:nummul(a, b) return a * b end
 		function luaK:numdiv(a, b) return a / b end
@@ -964,7 +964,7 @@ CLOSE CLOSURE VARARG
 		end
 
 		function luaK:codeAsBx(fs, o, A, sBx)
-			return self:codeABx(fs, o, A, sBx  luaP.MAXARG_sBx)
+			return self:codeABx(fs, o, A, sBx + luaP.MAXARG_sBx)
 		end
 
 		------------------------------------------------------------------------
@@ -1005,16 +1005,16 @@ CLOSE CLOSURE VARARG
 					if luaP:GET_OPCODE(previous) == "OP_LOADNIL" then
 						local pfrom = luaP:GETARG_A(previous)
 						local pto = luaP:GETARG_B(previous)
-						if pfrom <= from and from <= pto  1 then  -- can connect both?
-							if from  n - 1 > pto then
-								luaP:SETARG_B(previous, from  n - 1)
+						if pfrom <= from and from <= pto + 1 then  -- can connect both?
+							if from + n - 1 > pto then
+								luaP:SETARG_B(previous, from + n - 1)
 							end
 							return
 						end
 					end
 				end
 			end
-			self:codeABC(fs, "OP_LOADNIL", from, from  n - 1, 0)  -- else no optimization
+			self:codeABC(fs, "OP_LOADNIL", from, from + n - 1, 0)  -- else no optimization
 		end
 
 		------------------------------------------------------------------------
@@ -1034,7 +1034,7 @@ CLOSE CLOSURE VARARG
 		-- * used in luaY:close_func(), luaY:retstat()
 		------------------------------------------------------------------------
 		function luaK:ret(fs, first, nret)
-			self:codeABC(fs, "OP_RETURN", first, nret  1, 0)
+			self:codeABC(fs, "OP_RETURN", first, nret + 1, 0)
 		end
 
 		------------------------------------------------------------------------
@@ -1052,7 +1052,7 @@ CLOSE CLOSURE VARARG
 		------------------------------------------------------------------------
 		function luaK:fixjump(fs, pc, dest)
 			local jmp = fs.f.code[pc]
-			local offset = dest - (pc  1)
+			local offset = dest - (pc + 1)
 			lua_assert(dest ~= self.NO_JUMP)
 			if math.abs(offset) > luaP.MAXARG_sBx then
 				luaX:syntaxerror(fs.ls, "control structure too long")
@@ -1081,7 +1081,7 @@ CLOSE CLOSURE VARARG
 			if offset == self.NO_JUMP then  -- point to itself represents end of list
 				return self.NO_JUMP  -- end of list
 			else
-				return (pc  1)  offset  -- turn offset into absolute position
+				return (pc + 1) + offset  -- turn offset into absolute position
 			end
 		end
 
@@ -1220,7 +1220,7 @@ CLOSE CLOSURE VARARG
 		-- * used in luaK:reserveregs(), (lparser) luaY:forlist()
 		------------------------------------------------------------------------
 		function luaK:checkstack(fs, n)
-			local newstack = fs.freereg  n
+			local newstack = fs.freereg + n
 			if newstack > fs.f.maxstacksize then
 				if newstack >= self.MAXSTACK then
 					luaX:syntaxerror(fs.ls, "function or expression too complex")
@@ -1235,7 +1235,7 @@ CLOSE CLOSURE VARARG
 		------------------------------------------------------------------------
 		function luaK:reserveregs(fs, n)
 			self:checkstack(fs, n)
-			fs.freereg = fs.freereg  n
+			fs.freereg = fs.freereg + n
 		end
 
 		------------------------------------------------------------------------
@@ -1286,7 +1286,7 @@ CLOSE CLOSURE VARARG
 				-- setobj(L, &f->k[fs->nk], v); /* C */
 				-- luaC_barrier(L, f, v); /* GC */
 				local nk = fs.nk
-				fs.nk = fs.nk  1
+				fs.nk = fs.nk + 1
 				return nk
 			end
 
@@ -1341,9 +1341,9 @@ CLOSE CLOSURE VARARG
 		------------------------------------------------------------------------
 		function luaK:setreturns(fs, e, nresults)
 			if e.k == "VCALL" then  -- expression is an open function call?
-				luaP:SETARG_C(self:getcode(fs, e), nresults  1)
+				luaP:SETARG_C(self:getcode(fs, e), nresults + 1)
 			elseif e.k == "VVARARG" then
-				luaP:SETARG_B(self:getcode(fs, e), nresults  1);
+				luaP:SETARG_B(self:getcode(fs, e), nresults + 1);
 				luaP:SETARG_A(self:getcode(fs, e), fs.freereg);
 				luaK:reserveregs(fs, 1)
 			end
@@ -1903,7 +1903,7 @@ CLOSE CLOSURE VARARG
 				luaY.MAX_INT, "code size overflow")
 			f.lineinfo[fs.pc] = line
 			local pc = fs.pc
-			fs.pc = fs.pc  1
+			fs.pc = fs.pc + 1
 			return pc
 		end
 
@@ -1934,7 +1934,7 @@ CLOSE CLOSURE VARARG
 		-- * used in (lparser) luaY:closelistfield(), luaY:lastlistfield()
 		------------------------------------------------------------------------
 		function luaK:setlist(fs, base, nelems, tostore)
-			local c = math.floor((nelems - 1)/luaP.LFIELDS_PER_FLUSH)  1
+			local c = math.floor((nelems - 1)/luaP.LFIELDS_PER_FLUSH) + 1
 			local b = (tostore == luaY.LUA_MULTRET) and 0 or tostore
 			lua_assert(tostore ~= 0)
 			if c <= luaP.MAXARG_C then
@@ -1943,7 +1943,7 @@ CLOSE CLOSURE VARARG
 				self:codeABC(fs, "OP_SETLIST", base, b, 0)
 				self:code(fs, luaP:CREATE_Inst(c), fs.ls.lastline)
 			end
-			fs.freereg = base  1  -- free registers with list values
+			fs.freereg = base + 1  -- free registers with list values
 		end
 
 
@@ -2097,13 +2097,13 @@ CLOSE CLOSURE VARARG
 		function luaY:int2fb(x)
 			local e = 0  -- exponent
 			while x >= 16 do
-				x = math.floor((x  1) / 2)
-				e = e  1
+				x = math.floor((x + 1) / 2)
+				e = e + 1
 			end
 			if x < 8 then
 				return x
 			else
-				return ((e  1) * 8)  (x - 8)
+				return ((e + 1) * 8) + (x - 8)
 			end
 		end
 
@@ -2278,7 +2278,7 @@ CLOSE CLOSURE VARARG
 			f.locvars[fs.nlocvars].varname = varname
 			-- luaC_objbarrier(ls.L, f, varname) /* GC */
 			local nlocvars = fs.nlocvars
-			fs.nlocvars = fs.nlocvars  1
+			fs.nlocvars = fs.nlocvars + 1
 			return nlocvars
 		end
 
@@ -2295,8 +2295,8 @@ CLOSE CLOSURE VARARG
 		------------------------------------------------------------------------
 		function luaY:new_localvar(ls, name, n)
 			local fs = ls.fs
-			self:checklimit(fs, fs.nactvar  n  1, self.LUAI_MAXVARS, "local variables")
-			fs.actvar[fs.nactvar  n] = self:registerlocalvar(ls, name)
+			self:checklimit(fs, fs.nactvar + n + 1, self.LUAI_MAXVARS, "local variables")
+			fs.actvar[fs.nactvar + n] = self:registerlocalvar(ls, name)
 		end
 
 		------------------------------------------------------------------------
@@ -2304,7 +2304,7 @@ CLOSE CLOSURE VARARG
 		------------------------------------------------------------------------
 		function luaY:adjustlocalvars(ls, nvars)
 			local fs = ls.fs
-			fs.nactvar = fs.nactvar  nvars
+			fs.nactvar = fs.nactvar + nvars
 			for i = nvars, 1, -1 do
 				self:getlocvar(fs, fs.nactvar - i).startpc = fs.pc
 			end
@@ -2335,7 +2335,7 @@ CLOSE CLOSURE VARARG
 				end
 			end
 			-- new one
-			self:checklimit(fs, f.nups  1, self.LUAI_MAXUPVALUES, "upvalues")
+			self:checklimit(fs, f.nups + 1, self.LUAI_MAXUPVALUES, "upvalues")
 			self:growvector(fs.L, f.upvalues, f.nups, f.sizeupvalues,
 				nil, self.MAX_INT, "")
 			-- loop to initialize empty f.upvalues positions not required
@@ -2345,7 +2345,7 @@ CLOSE CLOSURE VARARG
 			-- this is a partial copy; only k & info fields used
 			fs.upvalues[f.nups] = { k = v.k, info = v.info }
 			local nups = f.nups
-			f.nups = f.nups  1
+			f.nups = f.nups + 1
 			return nups
 		end
 
@@ -2420,7 +2420,7 @@ CLOSE CLOSURE VARARG
 			local fs = ls.fs
 			local extra = nvars - nexps
 			if self:hasmultret(e.k) then
-				extra = extra  1  -- includes call itself
+				extra = extra + 1  -- includes call itself
 				if extra <= 0 then extra = 0 end
 				luaK:setreturns(fs, e, extra)  -- last exp. provides the difference
 				if extra > 1 then luaK:reserveregs(fs, extra - 1) end
@@ -2438,7 +2438,7 @@ CLOSE CLOSURE VARARG
 		-- tracks and limits parsing depth, assert check at end of parsing
 		------------------------------------------------------------------------
 		function luaY:enterlevel(ls)
-			ls.L.nCcalls = ls.L.nCcalls  1
+			ls.L.nCcalls = ls.L.nCcalls + 1
 			if ls.L.nCcalls > self.LUAI_MAXCCALLS then
 				luaX:lexerror(ls, "chunk has too many syntax levels", 0)
 			end
@@ -2493,7 +2493,7 @@ CLOSE CLOSURE VARARG
 				luaP.MAXARG_Bx, "constant table overflow")
 			-- loop to initialize empty f.p positions not required
 			f.p[fs.np] = func.f
-			fs.np = fs.np  1
+			fs.np = fs.np + 1
 			-- luaC_objbarrier(ls->L, f, func->f); /* C */
 			self:init_exp(v, "VRELOCABLE", luaK:codeABx(fs, "OP_CLOSURE", 0, fs.np - 1))
 			for i = 0, func.f.nups - 1 do
@@ -2642,7 +2642,7 @@ CLOSE CLOSURE VARARG
 			else  -- ls->t.token == '['
 				self:yindex(ls, key)
 			end
-			cc.nh = cc.nh  1
+			cc.nh = cc.nh + 1
 			self:checknext(ls, "=")
 			local rkkey = luaK:exp2RK(fs, key)
 			self:expr(ls, val)
@@ -2689,8 +2689,8 @@ CLOSE CLOSURE VARARG
 		function luaY:listfield(ls, cc)
 			self:expr(ls, cc.v)
 			self:checklimit(ls.fs, cc.na, self.MAX_INT, "items in a constructor")
-			cc.na = cc.na  1
-			cc.tostore = cc.tostore  1
+			cc.na = cc.na + 1
+			cc.tostore = cc.tostore + 1
 		end
 
 		------------------------------------------------------------------------
@@ -2754,18 +2754,18 @@ CLOSE CLOSURE VARARG
 					local c = ls.t.token
 					if c == "TK_NAME" then  -- param -> NAME
 						self:new_localvar(ls, self:str_checkname(ls), nparams)
-						nparams = nparams  1
+						nparams = nparams + 1
 					elseif c == "TK_DOTS" then  -- param -> `...'
 						luaX:next(ls)
 						-- [[
 						-- #if defined(LUA_COMPAT_VARARG)
 						-- use `arg' as default name
 						self:new_localvarliteral(ls, "arg", nparams)
-						nparams = nparams  1
-						f.is_vararg = self.VARARG_HASARG  self.VARARG_NEEDSARG
+						nparams = nparams + 1
+						f.is_vararg = self.VARARG_HASARG + self.VARARG_NEEDSARG
 						-- #endif
 						--]]
-						f.is_vararg = f.is_vararg  self.VARARG_ISVARARG
+						f.is_vararg = f.is_vararg + self.VARARG_ISVARARG
 					else
 						luaX:syntaxerror(ls, "<name> or "..self:LUA_QL("...").." expected")
 					end
@@ -2813,7 +2813,7 @@ CLOSE CLOSURE VARARG
 			while self:testnext(ls, ",") do
 				luaK:exp2nextreg(ls.fs, v)
 				self:expr(ls, v)
-				n = n  1
+				n = n + 1
 			end
 			return n
 		end
@@ -2858,11 +2858,11 @@ CLOSE CLOSURE VARARG
 				if args.k ~= "VVOID" then
 					luaK:exp2nextreg(fs, args)  -- close last argument
 				end
-				nparams = fs.freereg - (base  1)
+				nparams = fs.freereg - (base + 1)
 			end
-			self:init_exp(f, "VCALL", luaK:codeABC(fs, "OP_CALL", base, nparams  1, 2))
+			self:init_exp(f, "VCALL", luaK:codeABC(fs, "OP_CALL", base, nparams + 1, 2))
 			luaK:fixline(fs, line)
-			fs.freereg = base  1  -- call remove function and arguments and leaves
+			fs.freereg = base + 1  -- call remove function and arguments and leaves
 			-- (unless changed) one result
 		end
 
@@ -2991,7 +2991,7 @@ CLOSE CLOSURE VARARG
 		-- * used in subexpr()
 		------------------------------------------------------------------------
 		luaY.getbinopr_table = {
-			[""] = "OPR_ADD",
+			["+"] = "OPR_ADD",
 			["-"] = "OPR_SUB",
 			["*"] = "OPR_MUL",
 			["/"] = "OPR_DIV",
@@ -3022,7 +3022,7 @@ CLOSE CLOSURE VARARG
 		--   } priority[] = {  /* ORDER OPR */
 		------------------------------------------------------------------------
 		luaY.priority = {
-			{6, 6}, {6, 6}, {7, 7}, {7, 7}, {7, 7}, -- `' `-' `/' `%'
+			{6, 6}, {6, 6}, {7, 7}, {7, 7}, {7, 7}, -- `+' `-' `/' `%'
 			{10, 9}, {5, 4},                 -- power and concat (right associative)
 			{3, 3}, {3, 3},                  -- equality
 			{3, 3}, {3, 3}, {3, 3}, {3, 3},  -- order
@@ -3058,12 +3058,12 @@ CLOSE CLOSURE VARARG
 			end
 			-- expand while operators have priorities higher than 'limit'
 			local op = self:getbinopr(ls.t.token)
-			while op ~= "OPR_NOBINOPR" and self.priority[luaK.BinOpr[op]  1][1] > limit do
+			while op ~= "OPR_NOBINOPR" and self.priority[luaK.BinOpr[op] + 1][1] > limit do
 				local v2 = {}  -- expdesc
 				luaX:next(ls)
 				luaK:infix(ls.fs, op, v)
 				-- read sub-expression with higher priority
-				local nextop = self:subexpr(ls, v2, self.priority[luaK.BinOpr[op]  1][2])
+				local nextop = self:subexpr(ls, v2, self.priority[luaK.BinOpr[op] + 1][2])
 				luaK:posfix(ls.fs, op, v, v2)
 				op = nextop
 			end
@@ -3174,7 +3174,7 @@ CLOSE CLOSURE VARARG
 				end
 				self:checklimit(ls.fs, nvars, self.LUAI_MAXCCALLS - ls.L.nCcalls,
 					"variables in assignment")
-				self:assignment(ls, nv, nvars  1)
+				self:assignment(ls, nv, nvars + 1)
 			else  -- assignment -> '=' explist1
 				self:checknext(ls, "=")
 				local nexps = self:explist1(ls, e)
@@ -3230,7 +3230,7 @@ CLOSE CLOSURE VARARG
 
 		------------------------------------------------------------------------
 		-- parse a while-do control structure, body processed by block()
-		-- * with dynamic array sizes, MAXEXPWHILE  EXTRAEXP limits imposed by
+		-- * with dynamic array sizes, MAXEXPWHILE + EXTRAEXP limits imposed by
 		--   the function's implementation can be removed
 		-- * used in statements()
 		------------------------------------------------------------------------
@@ -3310,7 +3310,7 @@ CLOSE CLOSURE VARARG
 			local endfor = isnum and luaK:codeAsBx(fs, "OP_FORLOOP", base, luaK.NO_JUMP)
 				or luaK:codeABC(fs, "OP_TFORLOOP", base, 0, nvars)
 			luaK:fixline(fs, line)  -- pretend that `OP_FOR' starts the loop
-			luaK:patchlist(fs, isnum and endfor or luaK:jump(fs), prep  1)
+			luaK:patchlist(fs, isnum and endfor or luaK:jump(fs), prep + 1)
 		end
 
 		------------------------------------------------------------------------
@@ -3350,17 +3350,17 @@ CLOSE CLOSURE VARARG
 			local base = fs.freereg
 			-- create control variables
 			self:new_localvarliteral(ls, "(for generator)", nvars)
-			nvars = nvars  1
+			nvars = nvars + 1
 			self:new_localvarliteral(ls, "(for state)", nvars)
-			nvars = nvars  1
+			nvars = nvars + 1
 			self:new_localvarliteral(ls, "(for control)", nvars)
-			nvars = nvars  1
+			nvars = nvars + 1
 			-- create declared variables
 			self:new_localvar(ls, indexname, nvars)
-			nvars = nvars  1
+			nvars = nvars + 1
 			while self:testnext(ls, ",") do
 				self:new_localvar(ls, self:str_checkname(ls), nvars)
-				nvars = nvars  1
+				nvars = nvars + 1
 			end
 			self:checknext(ls, "TK_IN")
 			local line = ls.linenumber
@@ -3459,7 +3459,7 @@ CLOSE CLOSURE VARARG
 			local e = {}  -- expdesc
 			repeat
 				self:new_localvar(ls, self:str_checkname(ls), nvars)
-				nvars = nvars  1
+				nvars = nvars + 1
 			until not self:testnext(ls, ",")
 			if self:testnext(ls, "=") then
 				nexps = self:explist1(ls, e)
@@ -3687,7 +3687,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 		if not table.move then
 			function table.move(src, first, last, offset, dst)
-				for i = 0, last - first do dst[offset  i] = src[first  i] end
+				for i = 0, last - first do dst[offset + i] = src[first + i] end
 			end
 		end
 
@@ -3844,7 +3844,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 			for i = s, e, d do
 				local mul = 256 ^ math.abs(i - s)
 
-				num = num  mul * string.byte(src, i, i)
+				num = num + mul * string.byte(src, i, i)
 			end
 
 			return num
@@ -3854,8 +3854,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 		-- @f1..4 - The 4 bytes composing a little endian float
 		local function rd_flt_basic(f1, f2, f3, f4)
 			local sign = (-1) ^ bit.rshift(f4, 7)
-			local exp = bit.rshift(f3, 7)  bit.lshift(bit.band(f4, 0x7F), 1)
-			local frac = f1  bit.lshift(f2, 8)  bit.lshift(bit.band(f3, 0x7F), 16)
+			local exp = bit.rshift(f3, 7) + bit.lshift(bit.band(f4, 0x7F), 1)
+			local frac = f1 + bit.lshift(f2, 8) + bit.lshift(bit.band(f3, 0x7F), 16)
 			local normal = 1
 
 			if exp == 0 then
@@ -3873,18 +3873,18 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 				end
 			end
 
-			return sign * 2 ^ (exp - 127) * (1  normal / 2 ^ 23)
+			return sign * 2 ^ (exp - 127) * (1 + normal / 2 ^ 23)
 		end
 
 		-- double rd_dbl_basic(byte f1..8)
 		-- @f1..8 - The 8 bytes composing a little endian double
 		local function rd_dbl_basic(f1, f2, f3, f4, f5, f6, f7, f8)
 			local sign = (-1) ^ bit.rshift(f8, 7)
-			local exp = bit.lshift(bit.band(f8, 0x7F), 4)  bit.rshift(f7, 4)
+			local exp = bit.lshift(bit.band(f8, 0x7F), 4) + bit.rshift(f7, 4)
 			local frac = bit.band(f7, 0x0F) * 2 ^ 48
 			local normal = 1
 
-			frac = frac  (f6 * 2 ^ 40)  (f5 * 2 ^ 32)  (f4 * 2 ^ 24)  (f3 * 2 ^ 16)  (f2 * 2 ^ 8)  f1 -- help
+			frac = frac + (f6 * 2 ^ 40) + (f5 * 2 ^ 32) + (f4 * 2 ^ 24) + (f3 * 2 ^ 16) + (f2 * 2 ^ 8) + f1 -- help
 
 			if exp == 0 then
 				if frac == 0 then
@@ -3901,7 +3901,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 				end
 			end
 
-			return sign * 2 ^ (exp - 1023) * (normal  frac / 2 ^ 52)
+			return sign * 2 ^ (exp - 1023) * (normal + frac / 2 ^ 52)
 		end
 
 		-- int rd_int_le(string src, int s, int e)
@@ -3919,26 +3919,26 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 		-- float rd_flt_le(string src, int s)
 		-- @src - Source binary string
 		-- @s - Start index of little endian float
-		local function rd_flt_le(src, s) return rd_flt_basic(string.byte(src, s, s  3)) end
+		local function rd_flt_le(src, s) return rd_flt_basic(string.byte(src, s, s + 3)) end
 
 		-- float rd_flt_be(string src, int s)
 		-- @src - Source binary string
 		-- @s - Start index of big endian float
 		local function rd_flt_be(src, s)
-			local f1, f2, f3, f4 = string.byte(src, s, s  3)
+			local f1, f2, f3, f4 = string.byte(src, s, s + 3)
 			return rd_flt_basic(f4, f3, f2, f1)
 		end
 
 		-- double rd_dbl_le(string src, int s)
 		-- @src - Source binary string
 		-- @s - Start index of little endian double
-		local function rd_dbl_le(src, s) return rd_dbl_basic(string.byte(src, s, s  7)) end
+		local function rd_dbl_le(src, s) return rd_dbl_basic(string.byte(src, s, s + 7)) end
 
 		-- double rd_dbl_be(string src, int s)
 		-- @src - Source binary string
 		-- @s - Start index of big endian double
 		local function rd_dbl_be(src, s)
-			local f1, f2, f3, f4, f5, f6, f7, f8 = string.byte(src, s, s  7) -- same
+			local f1, f2, f3, f4, f5, f6, f7, f8 = string.byte(src, s, s + 7) -- same
 			return rd_dbl_basic(f8, f7, f6, f5, f4, f3, f2, f1)
 		end
 
@@ -3954,7 +3954,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 			local idx = S.index
 			local bt = string.byte(S.source, idx, idx)
 
-			S.index = idx  1
+			S.index = idx + 1
 			return bt
 		end
 
@@ -3962,7 +3962,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 		-- @S - Stream object to read from
 		-- @len - Length of string being read
 		local function stm_string(S, len)
-			local pos = S.index  len
+			local pos = S.index + len
 			local str = string.sub(S.source, S.index, pos - 1)
 
 			S.index = pos
@@ -3985,7 +3985,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 		-- @func - Reader callback
 		local function cst_int_rdr(len, func)
 			return function(S)
-				local pos = S.index  len
+				local pos = S.index + len
 				local int = func(S.source, S.index, pos)
 				S.index = pos
 
@@ -3999,7 +3999,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 		local function cst_flt_rdr(len, func)
 			return function(S)
 				local flt = func(S.source, S.index)
-				S.index = S.index  len
+				S.index = S.index + len
 
 				return flt
 			end
@@ -4050,7 +4050,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 					k = stm_lstring(S)
 				end
 
-				list[i] = k -- offset  during instruction decode
+				list[i] = k -- offset +1 during instruction decode
 			end
 
 			return list
@@ -4061,7 +4061,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 			local list = table.create(len)
 
 			for i = 1, len do
-				list[i] = stm_lua_func(S, src) -- offset  in CLOSURE
+				list[i] = stm_lua_func(S, src) -- offset +1 in CLOSURE
 			end
 
 			return list
@@ -4120,7 +4120,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 			-- post process optimization
 			for _, v in ipairs(proto.code) do
 				if v.is_K then
-					v.const = proto.const[v.Bx  1] -- offset for 1 based index
+					v.const = proto.const[v.Bx + 1] -- offset for 1 based index
 				else
 					if v.is_KB then v.const_B = proto.const[v.B - 0xFF] end
 
@@ -4219,7 +4219,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 			while true do
 				local inst = code[pc]
 				local op = inst.op
-				pc = pc  1
+				pc = pc + 1
 
 				if op < 18 then
 					if op < 8 then
@@ -4248,7 +4248,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 									rhs = memory[inst.C]
 								end
 
-								memory[inst.A] = lhs  rhs
+								memory[inst.A] = lhs + rhs
 							end
 						elseif op > 3 then
 							if op < 6 then
@@ -4264,7 +4264,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 										index = memory[inst.C]
 									end
 
-									memory[A  1] = memory[B]
+									memory[A + 1] = memory[B]
 									memory[A] = memory[B][index]
 								else
 									--[[GETGLOBAL]]
@@ -4321,11 +4321,11 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 										params = B - 1
 									end
 
-									local ret_list = table.pack(memory[A](table.unpack(memory, A  1, A  params)))
+									local ret_list = table.pack(memory[A](table.unpack(memory, A + 1, A + params)))
 									local ret_num = ret_list.n
 
 									if C == 0 then
-										top_index = A  ret_num - 1
+										top_index = A + ret_num - 1
 									else
 										ret_num = C - 1
 									end
@@ -4371,7 +4371,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 									close_lua_upvalues(open_list, 0)
 
-									return memory[A](table.unpack(memory, A  1, A  params))
+									return memory[A](table.unpack(memory, A + 1, A + params))
 								else
 									--[[SETTABLE]]
 									local index, value
@@ -4418,9 +4418,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 					else
 						--[[FORLOOP]]
 						local A = inst.A
-						local step = memory[A  2]
-						local index = memory[A]  step
-						local limit = memory[A  1]
+						local step = memory[A + 2]
+						local index = memory[A] + step
+						local limit = memory[A + 1]
 						local loops
 
 						if step == math.abs(step) then
@@ -4431,8 +4431,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 						if loops then
 							memory[A] = index
-							memory[A  3] = index
-							pc = pc  inst.sBx
+							memory[A + 3] = index
+							pc = pc + inst.sBx
 						end
 					end
 				elseif op > 18 then
@@ -4449,20 +4449,20 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 									local len
 
 									if B == 0 then
-										len = top_index - A  1
+										len = top_index - A + 1
 									else
 										len = B - 1
 									end
 
 									close_lua_upvalues(open_list, 0)
 
-									return table.unpack(memory, A, A  len - 1)
+									return table.unpack(memory, A, A + len - 1)
 								else
 									--[[CONCAT]]
 									local B = inst.B
 									local str = memory[B]
 
-									for i = B  1, inst.C do str = str .. memory[i] end
+									for i = B + 1, inst.C do str = str .. memory[i] end
 
 									memory[inst.A] = str
 								end
@@ -4505,9 +4505,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 										rhs = memory[inst.C]
 									end
 
-									if (lhs == rhs) == (inst.A ~= 0) then pc = pc  code[pc].sBx end
+									if (lhs == rhs) == (inst.A ~= 0) then pc = pc + code[pc].sBx end
 
-									pc = pc  1
+									pc = pc + 1
 								end
 							elseif op > 26 then
 								--[[LT]]
@@ -4525,9 +4525,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 									rhs = memory[inst.C]
 								end
 
-								if (lhs < rhs) == (inst.A ~= 0) then pc = pc  code[pc].sBx end
+								if (lhs < rhs) == (inst.A ~= 0) then pc = pc + code[pc].sBx end
 
-								pc = pc  1
+								pc = pc + 1
 							else
 								--[[POW]]
 								local lhs, rhs
@@ -4550,7 +4550,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 							--[[LOADBOOL]]
 							memory[inst.A] = inst.B ~= 0
 
-							if inst.C ~= 0 then pc = pc  1 end
+							if inst.C ~= 0 then pc = pc + 1 end
 						end
 					elseif op > 28 then
 						if op < 33 then
@@ -4570,13 +4570,13 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 									rhs = memory[inst.C]
 								end
 
-								if (lhs <= rhs) == (inst.A ~= 0) then pc = pc  code[pc].sBx end
+								if (lhs <= rhs) == (inst.A ~= 0) then pc = pc + code[pc].sBx end
 
-								pc = pc  1
+								pc = pc + 1
 							elseif op > 30 then
 								if op < 32 then
 									--[[CLOSURE]]
-									local sub = subs[inst.Bx  1] -- offset for 1 based index
+									local sub = subs[inst.Bx + 1] -- offset for 1 based index
 									local nups = sub.num_upval
 									local uvlist
 
@@ -4584,7 +4584,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 										uvlist = {}
 
 										for i = 1, nups do
-											local pseudo = code[pc  i - 1]
+											local pseudo = code[pc + i - 1]
 
 											if pseudo.op == OPCODE_RM[0] then -- @MOVE
 												uvlist[i - 1] = open_lua_upvalue(open_list, pseudo.B, memory)
@@ -4593,7 +4593,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 											end
 										end
 
-										pc = pc  nups
+										pc = pc + nups
 									end
 
 									memory[inst.A] = lua_wrap_state(sub, env, uvlist)
@@ -4604,9 +4604,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 									if (not memory[B]) ~= (inst.C ~= 0) then
 										memory[A] = memory[B]
-										pc = pc  code[pc].sBx
+										pc = pc + code[pc].sBx
 									end
-									pc = pc  1
+									pc = pc + 1
 								end
 							else
 								--[[UNM]]
@@ -4621,7 +4621,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 									if len == 0 then
 										len = vararg.len
-										top_index = A  len - 1
+										top_index = A + len - 1
 									end
 
 									table.move(vararg.list, 1, len, A, memory)
@@ -4631,14 +4631,14 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 									local init, limit, step
 
 									init = assert(tonumber(memory[A]), '`for` initial value must be a number')
-									limit = assert(tonumber(memory[A  1]), '`for` limit must be a number')
-									step = assert(tonumber(memory[A  2]), '`for` step must be a number')
+									limit = assert(tonumber(memory[A + 1]), '`for` limit must be a number')
+									step = assert(tonumber(memory[A + 2]), '`for` step must be a number')
 
 									memory[A] = init - step
-									memory[A  1] = limit
-									memory[A  2] = step
+									memory[A + 1] = limit
+									memory[A + 2] = step
 
-									pc = pc  inst.sBx
+									pc = pc + inst.sBx
 								end
 							elseif op > 36 then
 								--[[SETLIST]]
@@ -4652,40 +4652,40 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 								if C == 0 then
 									C = inst[pc].value
-									pc = pc  1
+									pc = pc + 1
 								end
 
 								offset = (C - 1) * FIELDS_PER_FLUSH
 
-								table.move(memory, A  1, A  len, offset  1, tab)
+								table.move(memory, A + 1, A + len, offset + 1, tab)
 							else
 								--[[NOT]]
 								memory[inst.A] = not memory[inst.B]
 							end
 						else
 							--[[TEST]]
-							if (not memory[inst.A]) ~= (inst.C ~= 0) then pc = pc  code[pc].sBx end
-							pc = pc  1
+							if (not memory[inst.A]) ~= (inst.C ~= 0) then pc = pc + code[pc].sBx end
+							pc = pc + 1
 						end
 					else
 						--[[TFORLOOP]]
 						local A = inst.A
-						local base = A  3
+						local base = A + 3
 
-						local vals = {memory[A](memory[A  1], memory[A  2])}
+						local vals = {memory[A](memory[A + 1], memory[A + 2])}
 
 						table.move(vals, 1, inst.C, base, memory)
 
 						if memory[base] ~= nil then
-							memory[A  2] = memory[base]
-							pc = pc  code[pc].sBx
+							memory[A + 2] = memory[base]
+							pc = pc + code[pc].sBx
 						end
 
-						pc = pc  1
+						pc = pc + 1
 					end
 				else
 					--[[JMP]]
-					pc = pc  inst.sBx
+					pc = pc + inst.sBx
 				end
 
 				state.pc = pc
@@ -4701,11 +4701,11 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 				table.move(passed, 1, proto.num_param, 0, memory)
 
 				if proto.num_param < passed.n then
-					local start = proto.num_param  1
+					local start = proto.num_param + 1
 					local len = passed.n - proto.num_param
 
 					vararg.len = len
-					table.move(passed, start, start  len - 1, 1, vararg.list)
+					table.move(passed, start, start + len - 1, 1, vararg.list)
 				end
 
 				local state = {vararg = vararg, memory = memory, code = proto.code, subs = proto.subs, pc = 1}
@@ -4779,7 +4779,7 @@ end
 utils.fetch_modules = INTgetloadedmodules
 
 utils.base64_encode = function(data)
-	local letters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789'
+	local letters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/'
 	return ((data:gsub('.', function(x) 
 		local r,b='',x:byte()
 		for i=8,1,-1 do r=r..(b%2^i-b%2^(i-1)>0 and '1' or '0') end
@@ -4787,12 +4787,12 @@ utils.base64_encode = function(data)
 	end)..'0000'):gsub('%d%d%d?%d?%d?%d?', function(x)
 		if (#x < 6) then return '' end
 		local c=0
-		for i=1,6 do c=c(x:sub(i,i)=='1' and 2^(6-i) or 0) end
-		return letters:sub(c,c)
-	end)..({ '', '==', '=' })[#data%3])
+		for i=1,6 do c=c+(x:sub(i,i)=='1' and 2^(6-i) or 0) end
+		return letters:sub(c+1,c+1)
+	end)..({ '', '==', '=' })[#data%3+1])
 end
 utils.base64_decode = function(data)
-	local b = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789'
+	local b = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/'
 	data = string.gsub(data, '[^'..b..'=]', '')
 	return (data:gsub('.', function(x)
 		if x == '=' then return '' end
@@ -4805,7 +4805,7 @@ utils.base64_decode = function(data)
 		if #x ~= 8 then return '' end
 		local c = 0
 		for i = 1, 8 do
-			c = c  (x:sub(i, i) == '1' and 2^(8 - i) or 0)
+			c = c + (x:sub(i, i) == '1' and 2^(8 - i) or 0)
 		end
 		return string.char(c)
 	end))
@@ -4850,7 +4850,7 @@ local function streamer(str): Streamer
 	function Stream.read(self: Streamer, len: number?, shift: boolean?): string
 		local len = len or 1
 		local shift = if shift ~= nil then shift else true
-		local dat = string.sub(self.Source, self.Offset  1, self.Offset  len)
+		local dat = string.sub(self.Source, self.Offset + 1, self.Offset + len)
 
 		local dataLength = string.len(dat)
 		local unreadBytes = len - dataLength
@@ -4866,7 +4866,7 @@ local function streamer(str): Streamer
 	function Stream.seek(self: Streamer, len: number)
 		local len = len or 1
 
-		self.Offset = math.clamp(self.Offset  len, 0, self.Length)
+		self.Offset = math.clamp(self.Offset + len, 0, self.Length)
 		self.IsFinished = self.Offset >= self.Length
 	end
 
@@ -4945,7 +4945,7 @@ function lz4.compress(str: string): string
 							table.insert(blocks, {
 								Literal = lit,
 								LiteralLength = string.len(lit),
-								MatchOffset = realPosition  1,
+								MatchOffset = realPosition + 1,
 								MatchLength = matchLen,
 							})
 							lit = ""
@@ -4990,7 +4990,7 @@ function lz4.compress(str: string): string
 		local tokenLit = math.clamp(litLen, 0, 15)
 		local tokenMat = math.clamp(matLen, 0, 15)
 
-		local token = bit32.lshift(tokenLit, 4)  tokenMat
+		local token = bit32.lshift(tokenLit, 4) + tokenMat
 		write(string.pack("<I1", token))
 
 		if litLen >= 15 then
@@ -5049,12 +5049,12 @@ function lz4.decompress(lz4data: string): string
 	repeat
 		local token = string.byte(inputStream:read())
 		local litLen = bit32.rshift(token, 4)
-		local matLen = bit32.band(token, 15)  4
+		local matLen = bit32.band(token, 15) + 4
 
 		if litLen >= 15 then
 			repeat
 				local nextByte = string.byte(inputStream:read())
-				litLen = nextByte
+				litLen += nextByte
 			until nextByte ~= 0xFF
 		end
 
@@ -5067,7 +5067,7 @@ function lz4.decompress(lz4data: string): string
 			if matLen >= 19 then
 				repeat
 					local nextByte = string.byte(inputStream:read())
-					matLen = nextByte
+					matLen += nextByte
 				until nextByte ~= 0xFF
 			end
 
@@ -5470,13 +5470,13 @@ function sandbox:initialize()
 	}
 	local drawings = {}
 	function DrawingLib.new(drawingType)
-		drawingIndex = 1
+		drawingIndex += 1
 		if drawingType == "Line" then
 			local lineObj = ({
 				From = Vector2.zero,
 				To = Vector2.zero,
 				Thickness = 1
-			}  baseDrawingObj)
+			} + baseDrawingObj)
 
 			local lineFrame = Instance.new("Frame")
 			lineFrame.Name = drawingIndex
@@ -5499,7 +5499,7 @@ function sandbox:initialize()
 
 					if index == "From" then
 						local direction = (lineObj.To - value)
-						local center = (lineObj.To  value) / 2
+						local center = (lineObj.To + value) / 2
 						local distance = direction.Magnitude
 						local theta = math.deg(math.atan2(direction.Y, direction.X))
 
@@ -5508,7 +5508,7 @@ function sandbox:initialize()
 						lineFrame.Size = UDim2.fromOffset(distance, lineObj.Thickness)
 					elseif index == "To" then
 						local direction = (value - lineObj.From)
-						local center = (value  lineObj.From) / 2
+						local center = (value + lineObj.From) / 2
 						local distance = direction.Magnitude
 						local theta = math.deg(math.atan2(direction.Y, direction.X))
 
@@ -5550,7 +5550,7 @@ function sandbox:initialize()
 				Center = false,
 				Outline = false,
 				OutlineColor = Color3.new()
-			}  baseDrawingObj)
+			} + baseDrawingObj)
 
 			local textLabel, uiStroke = Instance.new("TextLabel"), Instance.new("UIStroke")
 			textLabel.Name = drawingIndex
@@ -5571,7 +5571,7 @@ function sandbox:initialize()
 				local offset = textBounds / 2
 
 				textLabel.Size = UDim2.fromOffset(textBounds.X, textBounds.Y)
-				textLabel.Position = UDim2.fromOffset(textObj.Position.X  (if not textObj.Center then offset.X else 0), textObj.Position.Y  offset.Y)
+				textLabel.Position = UDim2.fromOffset(textObj.Position.X + (if not textObj.Center then offset.X else 0), textObj.Position.Y + offset.Y)
 			end)
 
 			uiStroke.Thickness = 1
@@ -5595,7 +5595,7 @@ function sandbox:initialize()
 					elseif index == "Position" then
 						local offset = textLabel.TextBounds / 2
 
-						textLabel.Position = UDim2.fromOffset(value.X  (if not textObj.Center then offset.X else 0), value.Y  offset.Y)
+						textLabel.Position = UDim2.fromOffset(value.X + (if not textObj.Center then offset.X else 0), value.Y + offset.Y)
 					elseif index == "Center" then
 						local position = (
 							if value then
@@ -5642,7 +5642,7 @@ function sandbox:initialize()
 				Position = Vector2.zero,
 				Thickness = .7,
 				Filled = false
-			}  baseDrawingObj)
+			} + baseDrawingObj)
 
 			local circleFrame, uiCorner, uiStroke = Instance.new("Frame"), Instance.new("UICorner"), Instance.new("UIStroke")
 			circleFrame.Name = drawingIndex
@@ -5711,7 +5711,7 @@ function sandbox:initialize()
 				Position = Vector2.zero,
 				Thickness = .7,
 				Filled = false
-			}  baseDrawingObj)
+			} + baseDrawingObj)
 
 			local squareFrame, uiStroke = Instance.new("Frame"), Instance.new("UIStroke")
 			squareFrame.Name = drawingIndex
@@ -5775,7 +5775,7 @@ function sandbox:initialize()
 				DataURL = "rbxassetid://0",
 				Size = Vector2.zero,
 				Position = Vector2.zero
-			}  baseDrawingObj)
+			} + baseDrawingObj)
 
 			local imageFrame = Instance.new("ImageLabel")
 			imageFrame.Name = drawingIndex
@@ -5835,7 +5835,7 @@ function sandbox:initialize()
 				PointD = Vector3.zero,
 				Thickness = 1,
 				Filled = false
-			}  baseDrawingObj)
+			} + baseDrawingObj)
 
 			local _linePoints = table.create(0)
 			_linePoints.A = DrawingLib.new("Line")
@@ -5900,7 +5900,7 @@ function sandbox:initialize()
 				PointC = Vector2.zero,
 				Thickness = 1,
 				Filled = false
-			}  baseDrawingObj)
+			} + baseDrawingObj)
 
 			local _linePoints = table.create(0)
 			_linePoints.A = DrawingLib.new("Line")
@@ -6496,13 +6496,13 @@ function sandbox:initialize()
 	environment.global.http.request = environment.global.request
 
 	local patterns = {
-		{ pattern = '(%w)%s*%=%s*(%w)', format = "%s = %s  %s" },
-		{ pattern = '(%w)%s*%-=%s*(%w)', format = "%s = %s - %s" },
-		{ pattern = '(%w)%s*%*=%s*(%w)', format = "%s = %s * %s" },
-		{ pattern = '(%w)%s*/=%s*(%w)', format = "%s = %s / %s" }
+		{ pattern = '(%w+)%s*%+=%s*(%w+)', format = "%s = %s + %s" },
+		{ pattern = '(%w+)%s*%-=%s*(%w+)', format = "%s = %s - %s" },
+		{ pattern = '(%w+)%s*%*=%s*(%w+)', format = "%s = %s * %s" },
+		{ pattern = '(%w+)%s*/=%s*(%w+)', format = "%s = %s / %s" }
 	}
 	local patterns2 = {
-		{ pattern = 'for%s(%w)%s*,%s*(%w)%s*in%s*(%w)%s*do', format = "for %s, %s in pairs(%s) do" }
+		{ pattern = 'for%s+(%w+)%s*,%s*(%w+)%s*in%s*(%w+)%s*do', format = "for %s, %s in pairs(%s) do" }
 	}
 
 	local function ToPairsLoop(code)
@@ -6637,7 +6637,7 @@ function sandbox:initialize()
 		end)
 
 		xpcall(function()
-			return table_or_userdata  type_check_semibypass
+			return table_or_userdata + type_check_semibypass
 		end, function()
 			real_metamethods.__add = debug.info(2, "f")
 		end)
@@ -6723,7 +6723,7 @@ function sandbox:initialize()
 		assert(type(source) == "string", "arg #1 must be type string")
 
 		local s1, val1 = pcall(function()
-			return load("local v1=15;v1=1;return v1", getfenv())()
+			return load("local v1=15;v1+=1;return v1", getfenv())()
 		end)
 		local s2, val2 = pcall(function()
 			return load('local v1={"a"};for i, v in v1 do return v end', getfenv())()
@@ -6779,7 +6779,7 @@ function sandbox:initialize()
 		hex = tostring(hex)
 		local text = ""
 		for i = 1, #hex, 2 do
-			local byte_str = string.sub(hex, i, i)
+			local byte_str = string.sub(hex, i, i+1)
 			local byte = tonumber(byte_str, 16)
 			text = text .. string.char(byte)
 		end
@@ -6792,7 +6792,7 @@ function sandbox:initialize()
 
 	environment.global.crypt.url.decode = function(a)
 		a = tostring(a)
-		a = string.gsub(a, "", " ")
+		a = string.gsub(a, "+", " ")
 		a = string.gsub(a, "%%(%x%x)", function(hex)
 			return string.char(tonumber(hex, 16))
 		end)
@@ -6807,7 +6807,7 @@ function sandbox:initialize()
 	end
 	environment.global.crypt.generatekey = function(optionalSize)
 		local key = ''
-		local a = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789'
+		local a = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/'
 		local n = nil
 		for i = 1, optionalSize or 32 do local n = math.random(1, #a) key = key .. a:sub(n, n) end
 		return environment.global.base64_encode(n)
@@ -6815,6 +6815,89 @@ function sandbox:initialize()
 
 	environment.global.crypt.generatebytes = function(size)
 
+	end
+	environment.global.fireproximityprompt = function(p)
+		local originalProperties = {
+			HoldDuration = p.HoldDuration,
+			MaxActivationDistance = p.MaxActivationDistance,
+			Enabled = p.Enabled,
+			RequiresLineOfSight = p.RequiresLineOfSight
+		}
+
+		p.HoldDuration = 0
+		p.MaxActivationDistance = math.huge
+		p.Enabled = true
+		p.RequiresLineOfSight = false
+
+		local function getAncestorPart()
+			local classes = {'BasePart', 'Part', 'MeshPart'}
+			for _, class in ipairs(classes) do
+				local ancestor = p:FindFirstAncestorOfClass(class)
+				if ancestor then
+					return ancestor
+				end
+			end
+			return nil
+		end
+
+		local ancestorPart = getAncestorPart()
+		local originalParent = p.Parent
+
+		if not ancestorPart then
+			local newPart = Instance.new("Part")
+			newPart.Parent = workspace
+			p.Parent = newPart
+			ancestorPart = newPart
+		end
+
+		local originalCFrame = ancestorPart.CFrame
+		local playerHead = game:GetService("Players").LocalPlayer.Character.Head
+		ancestorPart.CFrame = playerHead.CFrame + playerHead.CFrame.LookVector * 2
+
+		task.wait()
+		p:InputHoldBegin()
+		task.wait()
+		p:InputHoldEnd()
+
+		p.HoldDuration = originalProperties.HoldDuration
+		p.MaxActivationDistance = originalProperties.MaxActivationDistance
+		p.Enabled = originalProperties.Enabled
+		p.RequiresLineOfSight = originalProperties.RequiresLineOfSight
+		ancestorPart.CFrame = originalCFrame
+
+		if originalParent then
+			p.Parent = originalParent
+		end
+	end
+
+	environment.global.firetouchinterest = function(toTouch, TouchWith, on)
+		if on == 0 then return end
+
+		if toTouch and toTouch.ClassName == 'TouchTransmitter' then
+			local function get()
+				local classes = {'BasePart', 'Part', 'MeshPart'}
+				for _, v in pairs(classes) do
+					local ancestor = toTouch:FindFirstAncestorOfClass(v)
+					if ancestor then
+						return ancestor
+					end
+				end
+			end
+			toTouch = get()
+		end
+
+		if toTouch then
+			local cf = toTouch.CFrame
+			local anc = toTouch.CanCollide
+
+			toTouch.CanCollide = false
+			toTouch.CFrame = TouchWith.CFrame
+
+			task.wait()
+
+			toTouch.CFrame = cf
+			toTouch.CanCollide = anc
+		end
 	end
 	--yeah
 	-- can i test?
@@ -6872,9 +6955,9 @@ end
 
 -- GUI
 local gui = {}
-local anew = Instance.new
 
 function gui:Create()
+	local anew = Instance.new
 	local Frame = anew("Frame")
 	local UICorner = anew("UICorner")
 	local co = anew("TextBox")
@@ -6957,7 +7040,7 @@ function gui:Create()
 	TextLabel.Position = UDim2.new(0.0240000002, 0, 0.0359999985, 0)
 	TextLabel.Size = UDim2.new(0, 93, 0, 10)
 	TextLabel.Font = Enum.Font.Roboto
-	TextLabel.Text = "playvora shit"
+	TextLabel.Text = "Compiled Works"
 	TextLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
 	TextLabel.TextSize = 14.000
 	e.Activated:Connect(function()
@@ -6985,6 +7068,7 @@ end
 
 
 local function initialize_environment()
+	print("everything is loaded")
 	sandbox:initialize()
 	gui:Create()
 	task.spawn(initialize_scripts_handler)
