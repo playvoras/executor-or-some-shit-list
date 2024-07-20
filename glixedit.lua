@@ -6713,6 +6713,7 @@ function sandbox:initialize()
 	end
 
 	environment.global.__TEST_GLOBAL = true
+	
 
 	environment.global.loadstring = function(source)
 		assert(type(source) == "string", "arg #1 must be type string")
@@ -6805,6 +6806,103 @@ function sandbox:initialize()
 	environment.global.crypt.generatebytes = function(size)
 
 	end
+	local function rs(times)
+		for i=1, tonumber(times) or 1 do
+			game["Run Service"].RenderStepped:Wait()
+		end
+	end
+	environment.global.fireproximityprompt = function(pp)
+		assert(pp and pp:IsA("ProximityPrompt"), "Expected a ProximityPrompt")
+
+		local hd = pp.HoldDuration
+		local mad = pp.MaxActivationDistance
+		local rlof = pp.RequiresLineOfSight
+		local cf = workspace.CurrentCamera.CFrame
+
+		local tr = false
+		local trcon = pp.Triggered:Connect(function()
+			tr = true
+		end)
+
+		pp.RequiresLineOfSight = false
+		pp.HoldDuration = 0
+		pp.MaxActivationDistance = math.huge
+
+		local function getPos(obj)
+			if not obj then return end
+			local function get(obj)
+				if obj:IsA("Model") or obj:IsA("BasePart") then return obj:GetPivot().Position end
+				if obj:IsA("Attachment") then return obj.WorldPosition end
+				return nil
+			end
+			local got = get(obj)
+			if not got then
+				got = get(obj:FindFirstAncestorOfClass("Model")) or get(obj:FindFirstAncestorOfClass("BasePart")) or get(obj:FindFirstAncestorOfClass("Attachment"))
+				if not got then return end
+			end
+			return got
+		end
+
+		local function fire()
+			pp:InputHoldBegin()
+			pp:InputHoldEnd()
+		end
+
+		fire()
+
+		if not tr then
+			local pos = getPos(pp.Parent) or (cf.Position + cf.LookVector)
+			workspace.CurrentCamera.CFrame = CFrame.lookAt(cf.Position, pos)
+			wait(2)
+			fire()
+			wait(1)
+			workspace.CurrentCamera.CFrame = cf
+		end
+
+		pp.RequiresLineOfSight = rlof
+		pp.HoldDuration = hd
+		pp.MaxActivationDistance = mad
+
+		trcon:Disconnect()
+	end
+
+	environment.global.firetouchinterest = function(a, b, touching)
+		if type(touching) ~= "number" or not (touching == 0 or touching == 1) then
+			error("Argument 3 must be a number (0 or 1)")
+		end
+		if not (a:IsA("BasePart")) then
+			error("Argument 1 must be a BasePart")
+		end
+		if not (b:IsA("BasePart")) then
+			error("Argument 2 must be a BasePart")
+		end
+
+		touching = touching == 1
+
+		if not touching then
+			local c = b
+			local ct = c.CanTouch
+			c.CanTouch = false
+			rs(2)
+			c.CanTouch = ct
+		else
+			local pp = b:GetPivot()
+			local t = b.Transparency
+			local c = b.CanCollide
+			local an = b.Anchored
+
+			b:PivotTo(a:GetPivot())
+			b.Transparency = 1
+			b.CanCollide = false
+			b.Anchored = true
+			rs(2)
+			b.Transparency = t
+			b.CanCollide = c
+			b.Anchored = an
+			b:PivotTo(pp)
+		end
+	end
+
 	--yeah
 	-- can i test?
 	-- k
@@ -6974,7 +7072,7 @@ end
 
 
 local function initialize_environment()
-    sandbox:initialize()
+	sandbox:initialize()
 	gui:Create()
 	task.spawn(initialize_scripts_handler)
 	--val_the_sigma("print'hi'")()
