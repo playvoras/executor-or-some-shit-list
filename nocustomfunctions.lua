@@ -4726,24 +4726,271 @@ end)()
 
 local old = load
 
-
-local function execute(code, chunkname)
-	local toret = load(code:gsub("(%a+)%s*([%+%-%*/])=%s*", "%1 = %1 %2 "), env)
+function execute(code, chunkname)
+	local function transform(code)
+		code = code:gsub("([%w_]+)%s*([%+%-%*/%%])=%s*", function(var, op)
+			return string.format("%s = %s %s ", var, var, op)
+		end)
+		return code
+	end
+	local transformed_code = transform(code)
+	local toret = load(transformed_code, chunkname, "t", env)
 	local cl = toret
 	if type(toret) ~= "function" then
 		toret = function(...)
-			error(cl,2)
+			error(cl, 2)
 		end
 	end
 	return toret
 end
 
-local function loadstring(code, chunkname)
+function loadstring(code, chunkname)
 	return execute(code)
 end
 
-getfenv().execute = execute
-getfenv().loadstring = loadstring
+local function loadgui()
+	local RC2Ui = Instance.new("ScreenGui")
+	RC2Ui.Name = "RobloxGui"
+	RC2Ui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+	RC2Ui.ResetOnSpawn = false
+	RC2Ui.ScreenInsets = Enum.ScreenInsets.DeviceSafeInsets
+	RC2Ui.IgnoreGuiInset = true
+	RC2Ui.DisplayOrder = 10
+
+	local Frame = Instance.new("Frame")
+	Frame.Size = UDim2.new(0, 542, 0, 333)
+	Frame.BorderColor3 = Color3.fromRGB(0, 0, 0)
+	Frame.Position = UDim2.new(0.278956, 0, 0.2933168, 0)
+	Frame.BorderSizePixel = 0
+	Frame.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+	Frame.Parent = RC2Ui
+
+	local UIStroke = Instance.new("UIStroke")
+	UIStroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
+	UIStroke.Color = Color3.fromRGB(195, 195, 195)
+	UIStroke.Parent = Frame
+
+	local UIAspectRatioConstraint = Instance.new("UIAspectRatioConstraint")
+	UIAspectRatioConstraint.AspectRatio = 1.6276276
+	UIAspectRatioConstraint.Parent = Frame
+
+	local TextLabel = Instance.new("TextLabel")
+	TextLabel.Size = UDim2.new(1, 0, 0.0630631, 0)
+	TextLabel.BorderColor3 = Color3.fromRGB(0, 0, 0)
+	TextLabel.BackgroundTransparency = 1
+	TextLabel.Position = UDim2.new(0, 0, 0.9369369, 0)
+	TextLabel.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+	TextLabel.FontSize = Enum.FontSize.Size14
+	TextLabel.TextSize = 14
+	TextLabel.TextColor3 = Color3.fromRGB(208, 208, 208)
+	TextLabel.TextYAlignment = Enum.TextYAlignment.Bottom
+	TextLabel.Text = ""
+	TextLabel.TextWrapped = true
+	TextLabel.TextWrap = true
+	TextLabel.Font = Enum.Font.GothamMedium
+	TextLabel.TextTransparency = 0.5
+	TextLabel.TextXAlignment = Enum.TextXAlignment.Left
+	TextLabel.TextScaled = true
+	TextLabel.Parent = Frame
+
+	local UIPadding = Instance.new("UIPadding")
+	UIPadding.PaddingBottom = UDim.new(0.22, 0)
+	UIPadding.PaddingLeft = UDim.new(0.02, 0)
+	UIPadding.Parent = TextLabel
+
+	local UITextSizeConstraint = Instance.new("UITextSizeConstraint")
+	UITextSizeConstraint.MaxTextSize = 14
+	UITextSizeConstraint.Parent = TextLabel
+
+	local Frame1 = Instance.new("Frame")
+	Frame1.Size = UDim2.new(0.8579336, 0, 0.8048048, 0)
+	Frame1.BorderColor3 = Color3.fromRGB(0, 0, 0)
+	Frame1.Position = UDim2.new(0.0202952, 0, 0.1111111, 0)
+	Frame1.BorderSizePixel = 0
+	Frame1.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+	Frame1.Parent = Frame
+
+	local UICorner = Instance.new("UICorner")
+	UICorner.CornerRadius = UDim.new(0.02, 0)
+	UICorner.Parent = Frame1
+
+	local ScrollingFrame = Instance.new("ScrollingFrame")
+	ScrollingFrame.Size = UDim2.new(1, 0, 1, 0)
+	ScrollingFrame.BorderColor3 = Color3.fromRGB(0, 0, 0)
+	ScrollingFrame.BackgroundTransparency = 1
+	ScrollingFrame.Active = true
+	ScrollingFrame.BorderSizePixel = 0
+	ScrollingFrame.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+	ScrollingFrame.ScrollBarImageColor3 = Color3.fromRGB(211, 211, 211)
+	ScrollingFrame.ScrollBarImageTransparency = 0.5
+	ScrollingFrame.ScrollBarThickness = 2
+	ScrollingFrame.TopImage = "rbxasset://textures/ui/Scroll/scroll-middle.png"
+	ScrollingFrame.BottomImage = "rbxasset://textures/ui/Scroll/scroll-middle.png"
+	ScrollingFrame.Parent = Frame1
+	ScrollingFrame.CanvasSize = UDim2.new(0, 0)
+
+	local TextBox = Instance.new("TextBox")
+	TextBox.Size = UDim2.new(1, 0, 1, 0)
+	TextBox.BorderColor3 = Color3.fromRGB(0, 0, 0)
+	TextBox.BackgroundTransparency = 1
+	TextBox.BorderSizePixel = 0
+	TextBox.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+	TextBox.MultiLine = true
+	TextBox.FontSize = Enum.FontSize.Size24
+	TextBox.TextYAlignment = Enum.TextYAlignment.Top
+	TextBox.TextWrapped = true
+	TextBox.TextWrap = true
+	TextBox.TextSize = 19
+	TextBox.TextColor3 = Color3.fromRGB(212, 212, 212)
+	TextBox.PlaceholderText = "Code goes here. Press Alt+Q to hide the UI."
+	TextBox.Text = ""
+	TextBox.CursorPosition = -1
+	TextBox.Font = Enum.Font.RobotoMono
+	TextBox.TextXAlignment = Enum.TextXAlignment.Left
+	TextBox.ClearTextOnFocus = false
+	TextBox.Parent = ScrollingFrame
+
+	local UIPadding1 = Instance.new("UIPadding")
+	UIPadding1.PaddingTop = UDim.new(0, 5)
+	UIPadding1.PaddingLeft = UDim.new(0, 10)
+	UIPadding1.Parent = ScrollingFrame
+
+	local UIStroke1 = Instance.new("UIStroke")
+	UIStroke1.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
+	UIStroke1.Thickness = 0.8
+	UIStroke1.Color = Color3.fromRGB(195, 195, 195)
+	UIStroke1.Parent = Frame1
+
+	local UICorner1 = Instance.new("UICorner")
+	UICorner1.CornerRadius = UDim.new(0.02, 0)
+	UICorner1.Parent = Frame
+
+	local ButtonList = Instance.new("Frame")
+	ButtonList.Name = "ButtonList"
+	ButtonList.Size = UDim2.new(0.1141732, 0, 0.7761194, 0)
+	ButtonList.BackgroundTransparency = 1
+	ButtonList.Position = UDim2.new(0.8854252, 0, 0.1111197, 0)
+	ButtonList.BorderSizePixel = 0
+	ButtonList.BackgroundColor3 = Color3.fromRGB(34, 42, 47)
+	ButtonList.Parent = Frame
+
+	local UIGridLayout = Instance.new("UIGridLayout")
+	UIGridLayout.HorizontalAlignment = Enum.HorizontalAlignment.Center
+	UIGridLayout.SortOrder = Enum.SortOrder.LayoutOrder
+	UIGridLayout.CellSize = UDim2.new(0, 45, 0, 45)
+	UIGridLayout.CellPadding = UDim2.new(0.1, 0, 0.03, 0)
+	UIGridLayout.Parent = ButtonList
+
+	local execute = Instance.new("ImageButton")
+	execute.Name = "execute"
+	execute.Size = UDim2.new(0.7271917, 0, 0.1741164, 0)
+	execute.BorderColor3 = Color3.fromRGB(50, 50, 50)
+	execute.Position = UDim2.new(0.2413793, 0, 0.0192308, 0)
+	execute.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+	execute.AutoButtonColor = false
+	execute.HoverImage = "rbxassetid://12376668193"
+	execute.ImageTransparency = 0.4
+	execute.Image = "rbxassetid://12376668193"
+	execute.Parent = ButtonList
+
+	local UICorner2 = Instance.new("UICorner")
+	UICorner2.CornerRadius = UDim.new(0, 4)
+	UICorner2.Parent = execute
+
+	local UIStroke2 = Instance.new("UIStroke")
+	UIStroke2.Thickness = 0.8
+	UIStroke2.Color = Color3.fromRGB(195, 195, 195)
+	UIStroke2.Parent = execute
+
+	local UIAspectRatioConstraint1 = Instance.new("UIAspectRatioConstraint")
+	UIAspectRatioConstraint1.Parent = execute
+
+	local clear = Instance.new("ImageButton")
+	clear.Name = "clear"
+	clear.Size = UDim2.new(0.7271917, 0, 0.1741164, 0)
+	clear.Position = UDim2.new(0.0470444, 0, 0.185, 0)
+	clear.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+	clear.AutoButtonColor = false
+	clear.HoverImage = "rbxassetid://12376667817"
+	clear.ImageTransparency = 0.4
+	clear.Image = "rbxassetid://12376667817"
+	clear.Parent = ButtonList
+
+	local UICorner3 = Instance.new("UICorner")
+	UICorner3.CornerRadius = UDim.new(0, 4)
+	UICorner3.Parent = clear
+
+	local UIStroke3 = Instance.new("UIStroke")
+	UIStroke3.Thickness = 0.8
+	UIStroke3.Color = Color3.fromRGB(195, 195, 195)
+	UIStroke3.Parent = clear
+
+	local UIAspectRatioConstraint2 = Instance.new("UIAspectRatioConstraint")
+	UIAspectRatioConstraint2.Parent = clear
+
+	local LocalScript = Instance.new("LocalScript")
+	LocalScript.Parent = ButtonList
+
+	local TextLabel1 = Instance.new("TextLabel")
+	TextLabel1.Size = UDim2.new(1, 0, 0.1111111, 0)
+	TextLabel1.BorderColor3 = Color3.fromRGB(0, 0, 0)
+	TextLabel1.BackgroundTransparency = 1
+	TextLabel1.BorderSizePixel = 0
+	TextLabel1.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+	TextLabel1.FontSize = Enum.FontSize.Size24
+	TextLabel1.TextSize = 20
+	TextLabel1.TextColor3 = Color3.fromRGB(190, 190, 190)
+	TextLabel1.Text = ""
+	TextLabel1.TextWrapped = true
+	TextLabel1.TextWrap = true
+	TextLabel1.Font = Enum.Font.GothamBold
+	TextLabel1.Parent = Frame
+
+	local ImageLabel = Instance.new("ImageLabel")
+	ImageLabel.Size = UDim2.new(0, 150, 0, 65)
+	ImageLabel.BorderColor3 = Color3.fromRGB(0, 0, 0)
+	ImageLabel.Rotation = 90
+	ImageLabel.BackgroundTransparency = 1
+	ImageLabel.Position = UDim2.new(0.8035055, 0, 0.5930931, 0)
+	ImageLabel.BorderSizePixel = 0
+	ImageLabel.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+	ImageLabel.ImageTransparency = 0.8
+	ImageLabel.Image = "http://www.roblox.com/asset/?id=13344468103"
+	ImageLabel.Parent = Frame
+
+	local UITextSizeConstraint1 = Instance.new("UITextSizeConstraint")
+	UITextSizeConstraint1.MaxTextSize = 25
+	UITextSizeConstraint1.Parent = TextLabel1
+
+	RC2Ui.Parent = game:GetService("CoreGui").RobloxGui
+
+	local uis = game:GetService("UserInputService")
+	local alt = false
+	uis.InputBegan:Connect(function(i : InputObject, gp : boolean)
+		if gp then return end
+		if (uis:IsKeyDown(Enum.KeyCode.LeftAlt) or uis:IsKeyDown(Enum.KeyCode.RightAlt)) then
+			alt = true
+		end
+		if uis:IsKeyDown(Enum.KeyCode.Q) and alt then
+			RC2Ui.Enabled = not RC2Ui.Enabled
+			alt = false
+		end
+	end)
+
+
+	execute.Activated:Connect(function(inputObject, clickCount)
+		--setfenv(0, sandbox.environment.global)
+		--setfenv(0, sandbox.environment.global)
+
+		loadstring(TextBox.ContentText)()
+	end)
+end
+
+local function load()
+	loadgui()
+end
+
+game.Loaded:Connect(load)
 
 if script.Name == "PolicyService" then
 	local PlayersService = game:GetService('Players')
