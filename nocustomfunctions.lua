@@ -1,11 +1,11 @@
 local load = coroutine.wrap(function()
 	local compile = coroutine.wrap(function()
-		local luaZ = {}
-		local luaY = {}
-		local luaX = {}
-		local luaP = {}
-		local luaU = {}
-		local luaK = {}
+		local luaZ = table.create(0)
+		local luaY = table.create(0)
+		local luaX = table.create(0)
+		local luaP = table.create(0)
+		local luaU = table.create(0)
+		local luaK = table.create(0)
 		local size_size_t = 8
 
 		local function lua_assert(test)
@@ -22,6 +22,8 @@ local load = coroutine.wrap(function()
 			end
 		end
 
+
+
 		function luaZ:make_getF(source)
 			local LUAL_BUFFERSIZE = 512
 			local pos = 1
@@ -35,7 +37,7 @@ local load = coroutine.wrap(function()
 
 		function luaZ:init(reader, data)
 			if not reader then return end
-			local z = {}
+			local z = table.create(0)
 			z.reader = reader
 			z.data = data or ""
 			z.name = name
@@ -101,7 +103,7 @@ TK_EOS <eof>]]
 		luaX.LUA_COMPAT_LSTR = 1
 
 		function luaX:init()
-			local tokens, enums = {}, {}
+			local tokens, enums = table.create(0), table.create(0)
 			for v in string.gmatch(self.RESERVED, "[^\n]+") do
 				local _, _, tok, str = string.find(v, "(%S+)%s+(%S+)")
 				tokens[tok] = str
@@ -194,9 +196,9 @@ TK_EOS <eof>]]
 		end
 
 		function luaX:setinput(L, ls, z, source)
-			if not ls then ls = {} end
-			if not ls.lookahead then ls.lookahead = {} end
-			if not ls.t then ls.t = {} end
+			if not ls then ls = table.create(0) end
+			if not ls.lookahead then ls.lookahead = table.create(0) end
+			if not ls.t then ls.t = table.create(0) end
 			ls.decpoint = "."
 			ls.L = L
 			ls.lookahead.token = "TK_EOS" 
@@ -562,7 +564,7 @@ TK_EOS <eof>]]
 
 		function luaP:DecodeInst(x)
 			local byte = string.byte
-			local i = {}
+			local i = table.create(0)
 			local I = byte(x, 1)
 			local op = I % 64
 			i.OP = op
@@ -592,9 +594,9 @@ TK_EOS <eof>]]
 
 		luaP.NO_REG = luaP.MAXARG_A
 
-		luaP.opnames = {} 
-		luaP.OpCode = {} 
-		luaP.ROpCode = {} 
+		luaP.opnames = table.create(0) 
+		luaP.OpCode = table.create(0) 
+		luaP.ROpCode = table.create(0) 
 
 		local i = 0
 		for v in string.gmatch([[
@@ -701,7 +703,7 @@ CLOSE CLOSURE VARARG
 		luaU.LUAC_HEADERSIZE = 12   
 
 		function luaU:make_setS()
-			local buff = {}
+			local buff = table.create(0)
 			buff.data = ""
 			local writer =
 				function(s, buff)
@@ -713,7 +715,7 @@ CLOSE CLOSURE VARARG
 		end
 
 		function luaU:make_setF(filename)
-			local buff = {}
+			local buff = table.create(0)
 			buff.h = io.open(filename, "wb")
 			if not buff.h then return nil end
 			local writer =
@@ -903,7 +905,7 @@ CLOSE CLOSURE VARARG
 		end
 
 		function luaU:dump(L, f, w, data, strip)
-			local D = {} 
+			local D = table.create(0) 
 			D.L = L
 			D.write = w
 			D.data = data
@@ -1266,7 +1268,7 @@ CLOSE CLOSURE VARARG
 				--lua_assert(luaO_rawequalObj(&fs->f->k[cast_int(nvalue(idx))], v)); /* C */
 				return self:nvalue(idx)
 			else -- constant not found; create a new entry
-				idx = {}
+				idx = table.create(0)
 				self:setnvalue(idx, fs.nk)
 				fs.h[k.value] = idx
 				-- setnvalue(idx, cast_num(fs->nk)); /* C */
@@ -1288,7 +1290,7 @@ CLOSE CLOSURE VARARG
 		-- * used in (lparser) luaY:codestring(), luaY:singlevar()
 		------------------------------------------------------------------------
 		function luaK:stringK(fs, s)
-			local o = {}  -- TValue
+			local o = table.create(0)  -- TValue
 			self:setsvalue(o, s)
 			return self:addk(fs, o, o)
 		end
@@ -1299,7 +1301,7 @@ CLOSE CLOSURE VARARG
 		-- * used in (lparser) luaY:simpleexp(), luaY:fornum()
 		------------------------------------------------------------------------
 		function luaK:numberK(fs, r)
-			local o = {}  -- TValue
+			local o = table.create(0)  -- TValue
 			self:setnvalue(o, r)
 			return self:addk(fs, o, o)
 		end
@@ -1309,7 +1311,7 @@ CLOSE CLOSURE VARARG
 		-- * used only in luaK:exp2RK()
 		------------------------------------------------------------------------
 		function luaK:boolK(fs, b)
-			local o = {}  -- TValue
+			local o = table.create(0)  -- TValue
 			self:setbvalue(o, b)
 			return self:addk(fs, o, o)
 		end
@@ -1319,7 +1321,7 @@ CLOSE CLOSURE VARARG
 		-- * used only in luaK:exp2RK()
 		------------------------------------------------------------------------
 		function luaK:nilK(fs)
-			local k, v = {}, {}  -- TValue
+			local k, v = table.create(0), table.create(0)  -- TValue
 			self:setnilvalue(v)
 			-- cannot use nil as key; instead use table itself to represent nil
 			self:sethvalue(k, fs.h)
@@ -1763,7 +1765,7 @@ CLOSE CLOSURE VARARG
 		-- * used only in (lparser) luaY:subexpr()
 		------------------------------------------------------------------------
 		function luaK:prefix(fs, op, e)
-			local e2 = {}  -- expdesc
+			local e2 = table.create(0)  -- expdesc
 			e2.t, e2.f = self.NO_JUMP, self.NO_JUMP
 			e2.k = "VKNUM"
 			e2.nval = 0
@@ -2056,24 +2058,24 @@ CLOSE CLOSURE VARARG
 		-- * used only in open_func()
 		------------------------------------------------------------------------
 		function luaY:newproto(L)
-			local f = {} -- Proto
+			local f = table.create(0) -- Proto
 			-- luaC_link(L, obj2gco(f), LUA_TPROTO); /* GC */
-			f.k = {}
+			f.k = table.create(0)
 			f.sizek = 0
-			f.p = {}
+			f.p = table.create(0)
 			f.sizep = 0
-			f.code = {}
+			f.code = table.create(0)
 			f.sizecode = 0
 			f.sizelineinfo = 0
 			f.sizeupvalues = 0
 			f.nups = 0
-			f.upvalues = {}
+			f.upvalues = table.create(0)
 			f.numparams = 0
 			f.is_vararg = 0
 			f.maxstacksize = 0
-			f.lineinfo = {}
+			f.lineinfo = table.create(0)
 			f.sizelocvars = 0
-			f.locvars = {}
+			f.locvars = table.create(0)
 			f.lineDefined = 0
 			f.lastlinedefined = 0
 			f.source = nil
@@ -2265,7 +2267,7 @@ CLOSE CLOSURE VARARG
 			self:growvector(ls.L, f.locvars, fs.nlocvars, f.sizelocvars,
 				nil, self.SHRT_MAX, "too many local variables")
 			-- loop to initialize empty f.locvar positions not required
-			f.locvars[fs.nlocvars] = {} -- LocVar
+			f.locvars[fs.nlocvars] = table.create(0) -- LocVar
 			f.locvars[fs.nlocvars].varname = varname
 			-- luaC_objbarrier(ls.L, f, varname) /* GC */
 			local nlocvars = fs.nlocvars
@@ -2515,7 +2517,7 @@ CLOSE CLOSURE VARARG
 			fs.bl = nil
 			f.source = ls.source
 			f.maxstacksize = 2  -- registers 0/1 are always valid
-			fs.h = {}  -- constant table; was luaH_new call
+			fs.h = table.create(0)  -- constant table; was luaH_new call
 			-- anchor table of constants and prototype (to avoid being collected)
 			-- sethvalue2s(L, L->top, fs->h); incr_top(L); /* C */
 			-- setptvalue2s(L, L->top, f); incr_top(L);
@@ -2553,12 +2555,12 @@ CLOSE CLOSURE VARARG
 		-- * note additional sub-tables needed for LexState, FuncState
 		------------------------------------------------------------------------
 		function luaY:parser(L, z, buff, name)
-			local lexstate = {}  -- LexState
-			lexstate.t = {}
-			lexstate.lookahead = {}
-			local funcstate = {}  -- FuncState
-			funcstate.upvalues = {}
-			funcstate.actvar = {}
+			local lexstate = table.create(0)  -- LexState
+			lexstate.t = table.create(0)
+			lexstate.lookahead = table.create(0)
+			local funcstate = table.create(0)  -- FuncState
+			funcstate.upvalues = table.create(0)
+			funcstate.actvar = table.create(0)
 			-- the following nCcalls initialization added for convenience
 			L.nCcalls = 0
 			lexstate.buff = buff
@@ -2586,7 +2588,7 @@ CLOSE CLOSURE VARARG
 		function luaY:field(ls, v)
 			-- field -> ['.' | ':'] NAME
 			local fs = ls.fs
-			local key = {}  -- expdesc
+			local key = table.create(0)  -- expdesc
 			luaK:exp2anyreg(fs, v)
 			luaX:next(ls)  -- skip the dot or colon
 			self:checkname(ls, key)
@@ -2626,7 +2628,7 @@ CLOSE CLOSURE VARARG
 			-- recfield -> (NAME | '['exp1']') = exp1
 			local fs = ls.fs
 			local reg = ls.fs.freereg
-			local key, val = {}, {}  -- expdesc
+			local key, val = table.create(0), table.create(0)  -- expdesc
 			if ls.t.token == "TK_NAME" then
 				self:checklimit(fs, cc.nh, self.MAX_INT, "items in a constructor")
 				self:checkname(ls, key)
@@ -2695,8 +2697,8 @@ CLOSE CLOSURE VARARG
 			local fs = ls.fs
 			local line = ls.linenumber
 			local pc = luaK:codeABC(fs, "OP_NEWTABLE", 0, 0, 0)
-			local cc = {}  -- ConsControl
-			cc.v = {}
+			local cc = table.create(0)  -- ConsControl
+			cc.v = table.create(0)
 			cc.na, cc.nh, cc.tostore = 0, 0, 0
 			cc.t = t
 			self:init_exp(t, "VRELOCABLE", pc)
@@ -2774,9 +2776,9 @@ CLOSE CLOSURE VARARG
 		------------------------------------------------------------------------
 		function luaY:body(ls, e, needself, line)
 			-- body ->  '(' parlist ')' chunk END
-			local new_fs = {}  -- FuncState
-			new_fs.upvalues = {}
-			new_fs.actvar = {}
+			local new_fs = table.create(0)  -- FuncState
+			new_fs.upvalues = table.create(0)
+			new_fs.actvar = table.create(0)
 			self:open_func(ls, new_fs)
 			new_fs.f.lineDefined = line
 			self:checknext(ls, "(")
@@ -2816,7 +2818,7 @@ CLOSE CLOSURE VARARG
 		------------------------------------------------------------------------
 		function luaY:funcargs(ls, f)
 			local fs = ls.fs
-			local args = {}  -- expdesc
+			local args = table.create(0)  -- expdesc
 			local nparams
 			local line = ls.linenumber
 			local c = ls.t.token
@@ -2897,12 +2899,12 @@ CLOSE CLOSURE VARARG
 				if c == "." then  -- field
 					self:field(ls, v)
 				elseif c == "[" then  -- '[' exp1 ']'
-					local key = {}  -- expdesc
+					local key = table.create(0)  -- expdesc
 					luaK:exp2anyreg(fs, v)
 					self:yindex(ls, key)
 					luaK:indexed(fs, v, key)
 				elseif c == ":" then  -- ':' NAME funcargs
-					local key = {}  -- expdesc
+					local key = table.create(0)  -- expdesc
 					luaX:next(ls)
 					self:checkname(ls, key)
 					luaK:_self(fs, v, key)
@@ -3050,7 +3052,7 @@ CLOSE CLOSURE VARARG
 			-- expand while operators have priorities higher than 'limit'
 			local op = self:getbinopr(ls.t.token)
 			while op ~= "OPR_NOBINOPR" and self.priority[luaK.BinOpr[op] + 1][1] > limit do
-				local v2 = {}  -- expdesc
+				local v2 = table.create(0)  -- expdesc
 				luaX:next(ls)
 				luaK:infix(ls.fs, op, v)
 				-- read sub-expression with higher priority
@@ -3099,7 +3101,7 @@ CLOSE CLOSURE VARARG
 		function luaY:block(ls)
 			-- block -> chunk
 			local fs = ls.fs
-			local bl = {}  -- BlockCnt
+			local bl = table.create(0)  -- BlockCnt
 			self:enterblock(fs, bl, false)
 			self:chunk(ls)
 			lua_assert(bl.breaklist == luaK.NO_JUMP)
@@ -3150,14 +3152,14 @@ CLOSE CLOSURE VARARG
 		-- * used in exprstat()
 		------------------------------------------------------------------------
 		function luaY:assignment(ls, lh, nvars)
-			local e = {}  -- expdesc
+			local e = table.create(0)  -- expdesc
 			-- test was: VLOCAL <= lh->v.k && lh->v.k <= VINDEXED
 			local c = lh.v.k
 			self:check_condition(ls, c == "VLOCAL" or c == "VUPVAL" or c == "VGLOBAL"
 				or c == "VINDEXED", "syntax error")
 			if self:testnext(ls, ",") then  -- assignment -> ',' primaryexp assignment
-				local nv = {}  -- LHS_assign
-				nv.v = {}
+				local nv = table.create(0)  -- LHS_assign
+				nv.v = table.create(0)
 				nv.prev = lh
 				self:primaryexp(ls, nv.v)
 				if nv.v.k == "VLOCAL" then
@@ -3190,7 +3192,7 @@ CLOSE CLOSURE VARARG
 		------------------------------------------------------------------------
 		function luaY:cond(ls)
 			-- cond -> exp
-			local v = {}  -- expdesc
+			local v = table.create(0)  -- expdesc
 			self:expr(ls, v)  -- read condition
 			if v.k == "VNIL" then v.k = "VFALSE" end  -- 'falses' are all equal here
 			luaK:goiftrue(ls.fs, v)
@@ -3228,7 +3230,7 @@ CLOSE CLOSURE VARARG
 		function luaY:whilestat(ls, line)
 			-- whilestat -> WHILE cond DO block END
 			local fs = ls.fs
-			local bl = {}  -- BlockCnt
+			local bl = table.create(0)  -- BlockCnt
 			luaX:next(ls)  -- skip WHILE
 			local whileinit = luaK:getlabel(fs)
 			local condexit = self:cond(ls)
@@ -3249,7 +3251,7 @@ CLOSE CLOSURE VARARG
 			-- repeatstat -> REPEAT block UNTIL cond
 			local fs = ls.fs
 			local repeat_init = luaK:getlabel(fs)
-			local bl1, bl2 = {}, {}  -- BlockCnt
+			local bl1, bl2 = table.create(0), table.create(0)  -- BlockCnt
 			self:enterblock(fs, bl1, true)  -- loop block
 			self:enterblock(fs, bl2, false)  -- scope block
 			luaX:next(ls)  -- skip REPEAT
@@ -3273,7 +3275,7 @@ CLOSE CLOSURE VARARG
 		-- * used in fornum()
 		------------------------------------------------------------------------
 		function luaY:exp1(ls)
-			local e = {}  -- expdesc
+			local e = table.create(0)  -- expdesc
 			self:expr(ls, e)
 			local k = e.k
 			luaK:exp2nextreg(ls.fs, e)
@@ -3286,7 +3288,7 @@ CLOSE CLOSURE VARARG
 		------------------------------------------------------------------------
 		function luaY:forbody(ls, base, line, nvars, isnum)
 			-- forbody -> DO block
-			local bl = {}  -- BlockCnt
+			local bl = table.create(0)  -- BlockCnt
 			local fs = ls.fs
 			self:adjustlocalvars(ls, 3)  -- control variables
 			self:checknext(ls, "TK_DO")
@@ -3336,7 +3338,7 @@ CLOSE CLOSURE VARARG
 		function luaY:forlist(ls, indexname)
 			-- forlist -> NAME {,NAME} IN explist1 forbody
 			local fs = ls.fs
-			local e = {}  -- expdesc
+			local e = table.create(0)  -- expdesc
 			local nvars = 0
 			local base = fs.freereg
 			-- create control variables
@@ -3367,7 +3369,7 @@ CLOSE CLOSURE VARARG
 		function luaY:forstat(ls, line)
 			-- forstat -> FOR (fornum | forlist) END
 			local fs = ls.fs
-			local bl = {}  -- BlockCnt
+			local bl = table.create(0)  -- BlockCnt
 			self:enterblock(fs, bl, true)  -- scope for loop and control variables
 			luaX:next(ls)  -- skip `for'
 			local varname = self:str_checkname(ls)  -- first variable name
@@ -3427,7 +3429,7 @@ CLOSE CLOSURE VARARG
 		-- * used in statements()
 		------------------------------------------------------------------------
 		function luaY:localfunc(ls)
-			local v, b = {}, {}  -- expdesc
+			local v, b = table.create(0), table.create(0)  -- expdesc
 			local fs = ls.fs
 			self:new_localvar(ls, self:str_checkname(ls), 0)
 			self:init_exp(v, "VLOCAL", fs.freereg)
@@ -3447,7 +3449,7 @@ CLOSE CLOSURE VARARG
 			-- stat -> LOCAL NAME {',' NAME} ['=' explist1]
 			local nvars = 0
 			local nexps
-			local e = {}  -- expdesc
+			local e = table.create(0)  -- expdesc
 			repeat
 				self:new_localvar(ls, self:str_checkname(ls), nvars)
 				nvars = nvars + 1
@@ -3486,7 +3488,7 @@ CLOSE CLOSURE VARARG
 		------------------------------------------------------------------------
 		function luaY:funcstat(ls, line)
 			-- funcstat -> FUNCTION funcname body
-			local v, b = {}, {}  -- expdesc
+			local v, b = table.create(0), table.create(0)  -- expdesc
 			luaX:next(ls)  -- skip FUNCTION
 			local needself = self:funcname(ls, v)
 			self:body(ls, b, needself, line)
@@ -3501,8 +3503,8 @@ CLOSE CLOSURE VARARG
 		function luaY:exprstat(ls)
 			-- stat -> func | assignment
 			local fs = ls.fs
-			local v = {}  -- LHS_assign
-			v.v = {}
+			local v = table.create(0)  -- LHS_assign
+			v.v = table.create(0)
 			self:primaryexp(ls, v.v)
 			if v.v.k == "VCALL" then  -- stat -> func
 				luaP:SETARG_C(luaK:getcode(fs, v.v), 1)  -- call statement uses no results
@@ -3519,7 +3521,7 @@ CLOSE CLOSURE VARARG
 		function luaY:retstat(ls)
 			-- stat -> RETURN explist
 			local fs = ls.fs
-			local e = {}  -- expdesc
+			local e = table.create(0)  -- expdesc
 			local first, nret  -- registers with returned values
 			luaX:next(ls)  -- skip RETURN
 			if self:block_follow(ls.t.token) or ls.t.token == ";" then
@@ -3621,7 +3623,7 @@ CLOSE CLOSURE VARARG
 
 
 		luaX:init()  -- required by llex
-		local LuaState = {}  -- dummy, not actually used, but retained since
+		local LuaState = table.create(0)  -- dummy, not actually used, but retained since
 		-- the intention is to complete a straight port
 
 		------------------------------------------------------------------------
@@ -3668,23 +3670,11 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ]] --
-		local bit = bit or bit32 or require('bit')
+		local bit = bit32
 
-		if not table.create then function table.create(_) return {} end end
-
-		if not table.unpack then table.unpack = unpack end
-
-		if not table.pack then function table.pack(...) return {n = select('#', ...), ...} end end
-
-		if not table.move then
-			function table.move(src, first, last, offset, dst)
-				for i = 0, last - first do dst[offset + i] = src[first + i] end
-			end
-		end
-
-		local lua_bc_to_state
-		local lua_wrap_state
-		local stm_lua_func
+		local lua_bc_to_state = nil
+		local lua_wrap_state = nil
+		local stm_lua_func = nil
 
 		-- SETLIST config
 		local FIELDS_PER_FLUSH = 50
@@ -3777,65 +3767,64 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 			'ABx',
 			'ABC',
 		}
-
+		local AG = 'OpArgN'
+		local AU = 'OpArgU'
+		local AKYE = 'OpArgK'
 		local OPCODE_M = {
-			[0] = {b = 'OpArgR', c = 'OpArgN'},
-			{b = 'OpArgK', c = 'OpArgN'},
-			{b = 'OpArgU', c = 'OpArgU'},
-			{b = 'OpArgR', c = 'OpArgN'},
-			{b = 'OpArgU', c = 'OpArgN'},
-			{b = 'OpArgK', c = 'OpArgN'},
-			{b = 'OpArgR', c = 'OpArgK'},
-			{b = 'OpArgK', c = 'OpArgN'},
-			{b = 'OpArgU', c = 'OpArgN'},
-			{b = 'OpArgK', c = 'OpArgK'},
-			{b = 'OpArgU', c = 'OpArgU'},
-			{b = 'OpArgR', c = 'OpArgK'},
-			{b = 'OpArgK', c = 'OpArgK'},
-			{b = 'OpArgK', c = 'OpArgK'},
-			{b = 'OpArgK', c = 'OpArgK'},
-			{b = 'OpArgK', c = 'OpArgK'},
-			{b = 'OpArgK', c = 'OpArgK'},
-			{b = 'OpArgK', c = 'OpArgK'},
-			{b = 'OpArgR', c = 'OpArgN'},
-			{b = 'OpArgR', c = 'OpArgN'},
-			{b = 'OpArgR', c = 'OpArgN'},
+			[0] = {b = 'OpArgR', c = AG},
+			{b = AKYE, c = AG},
+			{b = AU, c = AU},
+			{b = 'OpArgR', c = AG},
+			{b = AU, c = AG},
+			{b = AKYE, c = AG},
+			{b = 'OpArgR', c = AKYE},
+			{b = AKYE, c = AG},
+			{b = AU, c = AG},
+			{b = AKYE, c = AKYE},
+			{b = AU, c = AU},
+			{b = 'OpArgR', c = AKYE},
+			{b = AKYE, c = AKYE},
+			{b = AKYE, c = AKYE},
+			{b = AKYE, c = AKYE},
+			{b = AKYE, c = AKYE},
+			{b = AKYE, c = AKYE},
+			{b = AKYE, c = AKYE},
+			{b = 'OpArgR', c = AG},
+			{b = 'OpArgR', c = AG},
+			{b = 'OpArgR', c = AG},
 			{b = 'OpArgR', c = 'OpArgR'},
-			{b = 'OpArgR', c = 'OpArgN'},
-			{b = 'OpArgK', c = 'OpArgK'},
-			{b = 'OpArgK', c = 'OpArgK'},
-			{b = 'OpArgK', c = 'OpArgK'},
-			{b = 'OpArgR', c = 'OpArgU'},
-			{b = 'OpArgR', c = 'OpArgU'},
-			{b = 'OpArgU', c = 'OpArgU'},
-			{b = 'OpArgU', c = 'OpArgU'},
-			{b = 'OpArgU', c = 'OpArgN'},
-			{b = 'OpArgR', c = 'OpArgN'},
-			{b = 'OpArgR', c = 'OpArgN'},
-			{b = 'OpArgN', c = 'OpArgU'},
-			{b = 'OpArgU', c = 'OpArgU'},
-			{b = 'OpArgN', c = 'OpArgN'},
-			{b = 'OpArgU', c = 'OpArgN'},
-			{b = 'OpArgU', c = 'OpArgN'},
+			{b = 'OpArgR', c = AG},
+			{b = AKYE, c = AKYE},
+			{b = AKYE, c = AKYE},
+			{b = AKYE, c = AKYE},
+			{b = 'OpArgR', c = AU},
+			{b = 'OpArgR', c = AU},
+			{b = AU, c = AU},
+			{b = AU, c = AU},
+			{b = AU, c = AG},
+			{b = 'OpArgR', c = AG},
+			{b = 'OpArgR', c = AG},
+			{b = AG, c = AU},
+			{b = AU, c = AU},
+			{b = AG, c = AG},
+			{b = AU, c = AG},
+			{b = AU, c = AG},
 		}
-
+		local function pow2(num)
+			return math.pow(2, num)
+		end
 		-- int rd_int_basic(string src, int s, int e, int d)
 		-- @src - Source binary string
 		-- @s - Start index of a little endian integer
 		-- @e - End index of the integer
 		-- @d - Direction of the loop
-		local function rd_int_basic(src, s, e, d)
+		local function rd_int_basic(src, start, times, by)
 			local num = 0
 
-			-- if bb[l] > 127 then -- signed negative
-			-- 	num = num - 256 ^ l
-			-- 	bb[l] = bb[l] - 128
-			-- end
-
-			for i = s, e, d do
-				local mul = 256 ^ math.abs(i - s)
-
-				num = num + mul * string.byte(src, i, i)
+			for i = start, times, by do
+				task.spawn(function()
+					num += math.pow(256, math.abs(i - start)) * string.byte(src, i, i)
+				end) --usually fast enough to be accurate will change if needed
 			end
 
 			return num
@@ -3858,13 +3847,13 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 				end
 			elseif exp == 0x7F then
 				if frac == 0 then
-					return sign * (1 / 0)
+					return sign * 9e909
 				else
-					return sign * (0 / 0)
+					return (0 / 0)
 				end
 			end
 
-			return sign * 2 ^ (exp - 127) * (1 + normal / 2 ^ 23)
+			return sign * pow2((exp - 127) * (1 + normal / pow2(23)))
 		end
 
 		-- double rd_dbl_basic(byte f1..8)
@@ -3872,27 +3861,25 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 		local function rd_dbl_basic(f1, f2, f3, f4, f5, f6, f7, f8)
 			local sign = (-1) ^ bit.rshift(f8, 7)
 			local exp = bit.lshift(bit.band(f8, 0x7F), 4) + bit.rshift(f7, 4)
-			local frac = bit.band(f7, 0x0F) * 2 ^ 48
+			local frac = (bit.band(f7, 0x0F) * pow2(48)) + ((f6 * pow2(40)) + (f5 * pow2(32)) + (f4 * pow2(24)) + (f3 * pow2(16)) + (f2 * pow2(8)) + f1) / pow2(52)
 			local normal = 1
-
-			frac = frac + (f6 * 2 ^ 40) + (f5 * 2 ^ 32) + (f4 * 2 ^ 24) + (f3 * 2 ^ 16) + (f2 * 2 ^ 8) + f1 -- help
-
+			local nan = 0/0
 			if exp == 0 then
 				if frac == 0 then
-					return sign * 0
+					return frac
 				else
 					normal = 0
 					exp = 1
 				end
 			elseif exp == 0x7FF then
 				if frac == 0 then
-					return sign * (1 / 0)
+					return sign * 9e909
 				else
-					return sign * (0 / 0)
+					return nan
 				end
 			end
 
-			return sign * 2 ^ (exp - 1023) * (normal + frac / 2 ^ 52)
+			return sign * pow2((exp - 1023) * (normal + frac))
 		end
 
 		-- int rd_int_le(string src, int s, int e)
@@ -4010,11 +3997,11 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 				if args == 'ABC' then
 					data.B = bit.band(bit.rshift(ins, 23), 0x1FF)
 					data.C = bit.band(bit.rshift(ins, 14), 0x1FF)
-					data.is_KB = mode.b == 'OpArgK' and data.B > 0xFF -- post process optimization
-					data.is_KC = mode.c == 'OpArgK' and data.C > 0xFF
+					data.is_KB = mode.b == AKYE and data.B > 0xFF -- post process optimization
+					data.is_KC = mode.c == AKYE and data.C > 0xFF
 				elseif args == 'ABx' then
 					data.Bx = bit.band(bit.rshift(ins, 14), 0x3FFFF)
-					data.is_K = mode.b == 'OpArgK'
+					data.is_K = mode.b == AKYE
 				elseif args == 'AsBx' then
 					data.sBx = bit.band(bit.rshift(ins, 14), 0x3FFFF) - 131071
 				end
@@ -4086,7 +4073,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 		end
 
 		function stm_lua_func(S, psrc)
-			local proto = {}
+			local proto = table.create(0)
 			local src = stm_lstring(S) or psrc -- source is propagated
 
 			proto.source = src -- source name
@@ -4203,14 +4190,14 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 			local vararg = state.vararg
 
 			local top_index = -1
-			local open_list = {}
+			local open_list = table.create(0)
 			local memory = state.memory
 			local pc = state.pc
 
 			while true do
 				local inst = code[pc]
 				local op = inst.op
-				pc = pc + 1
+				pc += 1
 
 				if op < 18 then
 					if op < 8 then
@@ -4383,7 +4370,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 								end
 							elseif op > 16 then
 								--[[NEWTABLE]]
-								memory[inst.A] = {}
+								memory[inst.A] = table.create(0)
 							else
 								--[[DIV]]
 								local lhs, rhs
@@ -4423,7 +4410,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 						if loops then
 							memory[A] = index
 							memory[A + 3] = index
-							pc = pc + inst.sBx
+							pc += inst.sBx
 						end
 					end
 				elseif op > 18 then
@@ -4496,9 +4483,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 										rhs = memory[inst.C]
 									end
 
-									if (lhs == rhs) == (inst.A ~= 0) then pc = pc + code[pc].sBx end
+									if (lhs == rhs) == (inst.A ~= 0) then pc += code[pc].sBx end
 
-									pc = pc + 1
+									pc += 1
 								end
 							elseif op > 26 then
 								--[[LT]]
@@ -4516,9 +4503,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 									rhs = memory[inst.C]
 								end
 
-								if (lhs < rhs) == (inst.A ~= 0) then pc = pc + code[pc].sBx end
+								if (lhs < rhs) == (inst.A ~= 0) then pc += code[pc].sBx end
 
-								pc = pc + 1
+								pc += 1
 							else
 								--[[POW]]
 								local lhs, rhs
@@ -4541,7 +4528,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 							--[[LOADBOOL]]
 							memory[inst.A] = inst.B ~= 0
 
-							if inst.C ~= 0 then pc = pc + 1 end
+							if inst.C ~= 0 then pc += 1 end
 						end
 					elseif op > 28 then
 						if op < 33 then
@@ -4561,9 +4548,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 									rhs = memory[inst.C]
 								end
 
-								if (lhs <= rhs) == (inst.A ~= 0) then pc = pc + code[pc].sBx end
+								if (lhs <= rhs) == (inst.A ~= 0) then pc += code[pc].sBx end
 
-								pc = pc + 1
+								pc += 1
 							elseif op > 30 then
 								if op < 32 then
 									--[[CLOSURE]]
@@ -4572,7 +4559,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 									local uvlist
 
 									if nups ~= 0 then
-										uvlist = {}
+										uvlist = table.create(0)
 
 										for i = 1, nups do
 											local pseudo = code[pc + i - 1]
@@ -4584,7 +4571,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 											end
 										end
 
-										pc = pc + nups
+										pc += nups
 									end
 
 									memory[inst.A] = lua_wrap_state(sub, env, uvlist)
@@ -4595,9 +4582,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 									if (not memory[B]) ~= (inst.C ~= 0) then
 										memory[A] = memory[B]
-										pc = pc + code[pc].sBx
+										pc += code[pc].sBx
 									end
-									pc = pc + 1
+									pc += 1
 								end
 							else
 								--[[UNM]]
@@ -4629,7 +4616,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 									memory[A + 1] = limit
 									memory[A + 2] = step
 
-									pc = pc + inst.sBx
+									pc += inst.sBx
 								end
 							elseif op > 36 then
 								--[[SETLIST]]
@@ -4643,7 +4630,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 								if C == 0 then
 									C = inst[pc].value
-									pc = pc + 1
+									pc += 1
 								end
 
 								offset = (C - 1) * FIELDS_PER_FLUSH
@@ -4655,8 +4642,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 							end
 						else
 							--[[TEST]]
-							if (not memory[inst.A]) ~= (inst.C ~= 0) then pc = pc + code[pc].sBx end
-							pc = pc + 1
+							if (not memory[inst.A]) ~= (inst.C ~= 0) then pc += code[pc].sBx end
+							pc += 1
 						end
 					else
 						--[[TFORLOOP]]
@@ -4669,14 +4656,14 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 						if memory[base] ~= nil then
 							memory[A + 2] = memory[base]
-							pc = pc + code[pc].sBx
+							pc += code[pc].sBx
 						end
 
-						pc = pc + 1
+						pc += 1
 					end
 				else
 					--[[JMP]]
-					pc = pc + inst.sBx
+					pc += inst.sBx
 				end
 
 				state.pc = pc
@@ -4687,7 +4674,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 			local function wrapped(...)
 				local passed = table.pack(...)
 				local memory = table.create(proto.max_stack)
-				local vararg = {len = 0, list = {}}
+				local vararg = {len = 0, list = table.create(0)}
 
 				table.move(passed, 1, proto.num_param, 0, memory)
 
@@ -4721,299 +4708,44 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 			return lua_wrap_state(lua_bc_to_state(bCode), env or getfenv(0))
 		end
 	end)()
-	--getfenv().script = nil
 
 	return function(source, env)
 		local executable
 		local env = env or getfenv(2)
 		local ran, failureReason = pcall(function()
-			local compiledBytecode = compile(source,  "shg340934qh")
+			local compiledBytecode = compile(source,  "")
 			executable = createExecutable(compiledBytecode, env)
 		end)
 
 		if ran then
 			return setfenv(executable, env)
 		end
-		return nil, failureReason
+		return failureReason
 	end
 end)()
 
 local old = load
 
-local Operations = {
-	Addition = {'(%w+)(%s*)%+=(%s*)(%w+)', '%1%2=%3%1%2+%3%4'},       -- v1 += v2 -> v1 = v1 + v2
-	Subtraction = {'(%w+)(%s*)%-=(%s*)(%w+)', '%1%2=%3%1%2-%3%4'},    -- v1 -= v2 -> v1 = v1 - v2
-	Multiplication = {'(%w+)(%s*)%*=(%s*)(%w+)', '%1%2=%3%1%2*%3%4'}, -- v1 *= v2 -> v1 = v1 * v2
-	Division = {'(%w+)(%s*)/=(%s*)(%w+)', '%1%2=%3%1%2/%3%4'},        -- v1 /= v2 -> v1 = v1 / v2
-	Modulus = {'(%w+)(%s*)%%=(%s*)(%w+)', '%1%2=%3%1%2%%%3%4'},       -- v1 %= v2 -> v1 = v1 % v2
-	Concatenation = {'(%w+)(%s*)%.%.=(%s*)(%w+)', '%1%2=%3%1%2..%3%4'} -- v1 ..= v2 -> v1 = v1 .. v2
-}
 
-local function toluau(code)
-	for _, op in pairs(Operations) do
-		code = code:gsub(op[1], op[2])
+local function execute(code, chunkname)
+	local toret = load(code:gsub("(%a+)%s*([%+%-%*/])=%s*", "%1 = %1 %2 "), env)
+	local cl = toret
+	if type(toret) ~= "function" then
+		toret = function(...)
+			error(cl,2)
+		end
 	end
-	return code
+	return toret
 end
 
-function loadstring(source)
-	return old(toluau(source))
+local function loadstring(code, chunkname)
+	return execute(code)
 end
 
-local gui = {}
+getfenv().execute = execute
+getfenv().loadstring = loadstring
 
-function gui:Create()
-	local RC2Ui = Instance.new("ScreenGui")
-	RC2Ui.Name = "RC2Ui"
-	RC2Ui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
-	RC2Ui.ResetOnSpawn = false
-	RC2Ui.ScreenInsets = Enum.ScreenInsets.DeviceSafeInsets
-	RC2Ui.IgnoreGuiInset = true
-	RC2Ui.DisplayOrder = 10
-
-	local Frame = Instance.new("Frame")
-	Frame.Size = UDim2.new(0, 542, 0, 333)
-	Frame.BorderColor3 = Color3.fromRGB(0, 0, 0)
-	Frame.Position = UDim2.new(0.278956, 0, 0.2933168, 0)
-	Frame.BorderSizePixel = 0
-	Frame.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
-	Frame.Parent = RC2Ui
-
-	local UIStroke = Instance.new("UIStroke")
-	UIStroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
-	UIStroke.Color = Color3.fromRGB(195, 195, 195)
-	UIStroke.Parent = Frame
-
-	local UIAspectRatioConstraint = Instance.new("UIAspectRatioConstraint")
-	UIAspectRatioConstraint.AspectRatio = 1.6276276
-	UIAspectRatioConstraint.Parent = Frame
-
-	local TextLabel = Instance.new("TextLabel")
-	TextLabel.Size = UDim2.new(1, 0, 0.0630631, 0)
-	TextLabel.BorderColor3 = Color3.fromRGB(0, 0, 0)
-	TextLabel.BackgroundTransparency = 1
-	TextLabel.Position = UDim2.new(0, 0, 0.9369369, 0)
-	TextLabel.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-	TextLabel.FontSize = Enum.FontSize.Size14
-	TextLabel.TextSize = 14
-	TextLabel.TextColor3 = Color3.fromRGB(208, 208, 208)
-	TextLabel.TextYAlignment = Enum.TextYAlignment.Bottom
-	TextLabel.Text = "RC2InternalUI-v1.1.3"
-	TextLabel.TextWrapped = true
-	TextLabel.TextWrap = true
-	TextLabel.Font = Enum.Font.GothamMedium
-	TextLabel.TextTransparency = 0.5
-	TextLabel.TextXAlignment = Enum.TextXAlignment.Left
-	TextLabel.TextScaled = true
-	TextLabel.Parent = Frame
-
-	local UIPadding = Instance.new("UIPadding")
-	UIPadding.PaddingBottom = UDim.new(0.22, 0)
-	UIPadding.PaddingLeft = UDim.new(0.02, 0)
-	UIPadding.Parent = TextLabel
-
-	local UITextSizeConstraint = Instance.new("UITextSizeConstraint")
-	UITextSizeConstraint.MaxTextSize = 14
-	UITextSizeConstraint.Parent = TextLabel
-
-	local Frame1 = Instance.new("Frame")
-	Frame1.Size = UDim2.new(0.8579336, 0, 0.8048048, 0)
-	Frame1.BorderColor3 = Color3.fromRGB(0, 0, 0)
-	Frame1.Position = UDim2.new(0.0202952, 0, 0.1111111, 0)
-	Frame1.BorderSizePixel = 0
-	Frame1.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
-	Frame1.Parent = Frame
-
-	local UICorner = Instance.new("UICorner")
-	UICorner.CornerRadius = UDim.new(0.02, 0)
-	UICorner.Parent = Frame1
-
-	local ScrollingFrame = Instance.new("ScrollingFrame")
-	ScrollingFrame.Size = UDim2.new(1, 0, 1, 0)
-	ScrollingFrame.BorderColor3 = Color3.fromRGB(0, 0, 0)
-	ScrollingFrame.BackgroundTransparency = 1
-	ScrollingFrame.Active = true
-	ScrollingFrame.BorderSizePixel = 0
-	ScrollingFrame.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-	ScrollingFrame.ScrollBarImageColor3 = Color3.fromRGB(211, 211, 211)
-	ScrollingFrame.ScrollBarImageTransparency = 0.5
-	ScrollingFrame.ScrollBarThickness = 2
-	ScrollingFrame.TopImage = "rbxasset://textures/ui/Scroll/scroll-middle.png"
-	ScrollingFrame.BottomImage = "rbxasset://textures/ui/Scroll/scroll-middle.png"
-	ScrollingFrame.Parent = Frame1
-	ScrollingFrame.CanvasSize = UDim2.new(0, 0)
-
-	local TextBox = Instance.new("TextBox")
-	TextBox.Size = UDim2.new(1, 0, 1, 0)
-	TextBox.BorderColor3 = Color3.fromRGB(0, 0, 0)
-	TextBox.BackgroundTransparency = 1
-	TextBox.BorderSizePixel = 0
-	TextBox.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-	TextBox.MultiLine = true
-	TextBox.FontSize = Enum.FontSize.Size24
-	TextBox.TextYAlignment = Enum.TextYAlignment.Top
-	TextBox.TextWrapped = true
-	TextBox.TextWrap = true
-	TextBox.TextSize = 19
-	TextBox.TextColor3 = Color3.fromRGB(212, 212, 212)
-	TextBox.PlaceholderText = "Code goes here. Press Alt+Q to hide the UI."
-	TextBox.Text = ""
-	TextBox.CursorPosition = -1
-	TextBox.Font = Enum.Font.RobotoMono
-	TextBox.TextXAlignment = Enum.TextXAlignment.Left
-	TextBox.ClearTextOnFocus = false
-	TextBox.Parent = ScrollingFrame
-
-	local UIPadding1 = Instance.new("UIPadding")
-	UIPadding1.PaddingTop = UDim.new(0, 5)
-	UIPadding1.PaddingLeft = UDim.new(0, 10)
-	UIPadding1.Parent = ScrollingFrame
-
-	local UIStroke1 = Instance.new("UIStroke")
-	UIStroke1.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
-	UIStroke1.Thickness = 0.8
-	UIStroke1.Color = Color3.fromRGB(195, 195, 195)
-	UIStroke1.Parent = Frame1
-
-	local UICorner1 = Instance.new("UICorner")
-	UICorner1.CornerRadius = UDim.new(0.02, 0)
-	UICorner1.Parent = Frame
-
-	local ButtonList = Instance.new("Frame")
-	ButtonList.Name = "ButtonList"
-	ButtonList.Size = UDim2.new(0.1141732, 0, 0.7761194, 0)
-	ButtonList.BackgroundTransparency = 1
-	ButtonList.Position = UDim2.new(0.8854252, 0, 0.1111197, 0)
-	ButtonList.BorderSizePixel = 0
-	ButtonList.BackgroundColor3 = Color3.fromRGB(34, 42, 47)
-	ButtonList.Parent = Frame
-
-	local UIGridLayout = Instance.new("UIGridLayout")
-	UIGridLayout.HorizontalAlignment = Enum.HorizontalAlignment.Center
-	UIGridLayout.SortOrder = Enum.SortOrder.LayoutOrder
-	UIGridLayout.CellSize = UDim2.new(0, 45, 0, 45)
-	UIGridLayout.CellPadding = UDim2.new(0.1, 0, 0.03, 0)
-	UIGridLayout.Parent = ButtonList
-
-	local execute = Instance.new("ImageButton")
-	execute.Name = "execute"
-	execute.Size = UDim2.new(0.7271917, 0, 0.1741164, 0)
-	execute.BorderColor3 = Color3.fromRGB(50, 50, 50)
-	execute.Position = UDim2.new(0.2413793, 0, 0.0192308, 0)
-	execute.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
-	execute.AutoButtonColor = false
-	execute.HoverImage = "rbxassetid://12376668193"
-	execute.ImageTransparency = 0.4
-	execute.Image = "rbxassetid://12376668193"
-	execute.Parent = ButtonList
-
-	local UICorner2 = Instance.new("UICorner")
-	UICorner2.CornerRadius = UDim.new(0, 4)
-	UICorner2.Parent = execute
-
-	local UIStroke2 = Instance.new("UIStroke")
-	UIStroke2.Thickness = 0.8
-	UIStroke2.Color = Color3.fromRGB(195, 195, 195)
-	UIStroke2.Parent = execute
-
-	local UIAspectRatioConstraint1 = Instance.new("UIAspectRatioConstraint")
-	UIAspectRatioConstraint1.Parent = execute
-
-	local clear = Instance.new("ImageButton")
-	clear.Name = "clear"
-	clear.Size = UDim2.new(0.7271917, 0, 0.1741164, 0)
-	clear.Position = UDim2.new(0.0470444, 0, 0.185, 0)
-	clear.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
-	clear.AutoButtonColor = false
-	clear.HoverImage = "rbxassetid://12376667817"
-	clear.ImageTransparency = 0.4
-	clear.Image = "rbxassetid://12376667817"
-	clear.Parent = ButtonList
-
-	local UICorner3 = Instance.new("UICorner")
-	UICorner3.CornerRadius = UDim.new(0, 4)
-	UICorner3.Parent = clear
-
-	local UIStroke3 = Instance.new("UIStroke")
-	UIStroke3.Thickness = 0.8
-	UIStroke3.Color = Color3.fromRGB(195, 195, 195)
-	UIStroke3.Parent = clear
-
-	local UIAspectRatioConstraint2 = Instance.new("UIAspectRatioConstraint")
-	UIAspectRatioConstraint2.Parent = clear
-
-	local LocalScript = Instance.new("LocalScript")
-	LocalScript.Parent = ButtonList
-
-	local TextLabel1 = Instance.new("TextLabel")
-	TextLabel1.Size = UDim2.new(1, 0, 0.1111111, 0)
-	TextLabel1.BorderColor3 = Color3.fromRGB(0, 0, 0)
-	TextLabel1.BackgroundTransparency = 1
-	TextLabel1.BorderSizePixel = 0
-	TextLabel1.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-	TextLabel1.FontSize = Enum.FontSize.Size24
-	TextLabel1.TextSize = 20
-	TextLabel1.TextColor3 = Color3.fromRGB(190, 190, 190)
-	TextLabel1.Text = "Playvora"
-	TextLabel1.TextWrapped = true
-	TextLabel1.TextWrap = true
-	TextLabel1.Font = Enum.Font.GothamBold
-	TextLabel1.Parent = Frame
-
-	local ImageLabel = Instance.new("ImageLabel")
-	ImageLabel.Size = UDim2.new(0, 150, 0, 65)
-	ImageLabel.BorderColor3 = Color3.fromRGB(0, 0, 0)
-	ImageLabel.Rotation = 90
-	ImageLabel.BackgroundTransparency = 1
-	ImageLabel.Position = UDim2.new(0.8035055, 0, 0.5930931, 0)
-	ImageLabel.BorderSizePixel = 0
-	ImageLabel.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-	ImageLabel.ImageTransparency = 0.8
-	ImageLabel.Image = "http://www.roblox.com/asset/?id=13344468103"
-	ImageLabel.Parent = Frame
-
-	local UITextSizeConstraint1 = Instance.new("UITextSizeConstraint")
-	UITextSizeConstraint1.MaxTextSize = 25
-	UITextSizeConstraint1.Parent = TextLabel1
-
-	RC2Ui.Parent = game:GetService("CoreGui")
-
-	local uis = game:GetService("UserInputService")
-	local alt = false
-	uis.InputBegan:Connect(function(i : InputObject, gp : boolean)
-		if gp then return end
-		if (uis:IsKeyDown(Enum.KeyCode.LeftAlt) or uis:IsKeyDown(Enum.KeyCode.RightAlt)) then
-			alt = true
-		end
-		if uis:IsKeyDown(Enum.KeyCode.Q) and alt then
-			RC2Ui.Enabled = not RC2Ui.Enabled
-			alt = false
-		end
-	end)
-
-
-	execute.Activated:Connect(function(inputObject, clickCount)
-		--setfenv(0, sandbox.environment.global)
-		--setfenv(0, sandbox.environment.global)
-       loadstring(TextBox.ContentText)()
-	end)
-end
-
-local function initialize_environment()
-	task.wait(4)
-	gui:Create()
-end
-
-task.spawn(initialize_environment)
-
-	
 if script.Name == "PolicyService" then
-    --[[
-        Filename: PolicyService.lua
-        Written by: ben
-        Description: Handles all policy service calls in lua for core scripts
-    --]]
-
 	local PlayersService = game:GetService('Players')
 
 	local isSubjectToChinaPolicies = true
@@ -5023,13 +4755,11 @@ if script.Name == "PolicyService" then
 
 	local initializedEvent = Instance.new("BindableEvent")
 
-	--[[ Classes ]]--
 	local PolicyService = {}
 
 	function PolicyService:InitAsync()
 		if _G.__TESTEZ_RUNNING_TEST__ then
 			isSubjectToChinaPolicies = false
-			-- Return here in the case of unit tests
 			return
 		end
 
