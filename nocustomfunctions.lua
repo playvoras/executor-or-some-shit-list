@@ -4804,6 +4804,18 @@ fakegame_meta.__index = function(self, index)
     return game
 end
 fakegame_meta.__metatable = "The metatable is locked"
+local originalHttpGet = game.HttpGet
+
+setmetatable(game, {
+    __index = function(self, key)
+        if key == "HttpGet" then
+            return function(_, ...)
+                return originalHttpGet(self, ...)
+            end
+        end
+        return rawget(self, key)
+    end
+})
 
 
 
