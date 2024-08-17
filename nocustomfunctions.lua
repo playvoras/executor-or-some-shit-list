@@ -4757,53 +4757,6 @@ function request(options) assert(type(options) == "table", "invalid argument #1 
 function HttpGet(url) assert(type(url) == "string", "invalid argument #1 to 'httpget' (string expected, got " .. type(url) .. ") ", 2) local response = request({ Url = url; Method = "GET"; }).Body task.wait() return response end
 function http_request(url) assert(type(url) == "string", "invalid argument #1 to 'httpget' (string expected, got " .. type(url) .. ") ", 2) local response = request({ Url = url; Method = "GET"; }).Body task.wait() return response end
 
-local fakegame = newproxy(true)
-local fakegame_meta = getmetatable(fakegame)
-
-fakegame_meta.__index = function(self, index)
-    local _, game_index = pcall(function()
-        return game[index]
-    end)
-
-    if index == "HttpGet" then
-        return function(self, url)
-            assert(
-                typeof(url) == "string" or url:sub(1, 4) == "http",
-                "arg #1 not a valid url."
-            )
-
-            local s, r = nil, nil
-
-            http_service:RequestInternal({
-                Url = url,
-                Method = "GET"
-            }):Start(function(a, b)
-                s, r = a, b
-            end)
-
-            repeat task.wait() until (s ~= nil or r ~= nil)
-            return r.Body
-        end
-    elseif index == "GetObjects" then
-        return function(self, assetid)
-            assert(
-                typeof(assetid) == "string" or assetid:find("rbxassetid://"),
-                "arg #1 not a valid asset id."
-            )
-
-            return {insert_service:LoadLocalAsset(assetid)}
-        end
-    elseif game_index and typeof(game_index) == "function" then
-        return function(self, ...)
-            return game_index(game, ...)
-        end
-    else
-        return game_index or game[index]
-    end
-
-    return game
-end
-fakegame_meta.__metatable = "The metatable is locked"
 local originalHttpGet = game.HttpGet
 
 setmetatable(game, {
