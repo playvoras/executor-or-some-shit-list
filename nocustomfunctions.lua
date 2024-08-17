@@ -4751,6 +4751,12 @@ end
 local insert_service = game:GetService("InsertService")
 local http_service = game:GetService("HttpService")
 
+function checkcaller() return true end
+function isluau() return true end
+function request(options) assert(type(options) == "table", "invalid argument #1 to 'request' (table expected, got " .. type(options) .. ") ", 2)  local Event = Instance.new("BindableEvent") local RequestInternal = game:GetService("HttpService").RequestInternal local Request = RequestInternal(game:GetService("HttpService"), options) local Start = Request.Start local Response Start(Request, function(state, response) Response = response Event:Fire() end) Event.Event:Wait() return Response end
+function HttpGet(url) assert(type(url) == "string", "invalid argument #1 to 'httpget' (string expected, got " .. type(url) .. ") ", 2) local response = request({ Url = url; Method = "GET"; }).Body task.wait() return response end
+function http_request(url) assert(type(url) == "string", "invalid argument #1 to 'httpget' (string expected, got " .. type(url) .. ") ", 2) local response = request({ Url = url; Method = "GET"; }).Body task.wait() return response end
+
 local fakegame = newproxy(true)
 local fakegame_meta = getmetatable(fakegame)
 
